@@ -140,6 +140,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Action.h" />
+    <ClInclude Include="Interpreter.h" />
+    <ClInclude Include="Parser.h" />
+    <ClInclude Include="ParseTree.h" />
+    <ClInclude Include="ScriptServer.h" />
+    <ClInclude Include="User.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Action.cpp" />
+    <ClCompile Include="Interpreter.cpp" />
+    <ClCompile Include="Parser.cpp" />
+    <ClCompile Include="ParseTree.cpp" />
+    <ClCompile Include="ScriptServer.cpp" />
+    <ClCompile Include="User.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
