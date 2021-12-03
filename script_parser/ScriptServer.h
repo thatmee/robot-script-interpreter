@@ -6,9 +6,10 @@
 
 class ScriptServer
 {
-public:
-    ParseTree parseTree;
+private:
     const char* scriptName;
     Parser parser;
-    ScriptServer(const char* scriptName_);
+public:
+    ScriptServer(const char* scriptName_) : parser(scriptName_), scriptName(scriptName_) {}
+    void parse();
 };

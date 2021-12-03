@@ -1,21 +1,21 @@
 #pragma once
 #include "ParseTree.h"
-/// @brief 所有动作的类型
-enum class ActionType
-{
-    Out,
-    Listen,
-    Branch,
-    Silence,
-    Do,
-    Default,
-    Exit
-};
 
 /// @brief 动作的抽象类
 class Action
 {
 protected:
+    /// @brief 所有动作的类型
+    enum class ActionType
+    {
+        Out,
+        Listen,
+        Branch,
+        Silence,
+        Do,
+        Default,
+        Exit
+    };
     ActionType curType;
     Action() {}
     virtual ActionType getCurType() const = 0;
