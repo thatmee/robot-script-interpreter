@@ -50,15 +50,18 @@ void Parser::splitString(const std::string& s, std::vector<std::string>& result,
 void Parser::parseFile() {
     std::ifstream inFile;
     inFile.open(scriptName);
-    char lineBuf[LINE_BUFFER_SIZE];
-    inFile.getline(lineBuf, LINE_BUFFER_SIZE);
-
-    Line line = lineBuf;
-    // 删除行首和行尾的空白字符，删除行内的注释
-    trim(line);
-    if (line.size() > 0)
-        // 不是空行，则进一步分析这一行脚本
-        parseLine(line);
+    // 逐行读取脚本文件
+    while (!inFile.eof()) {
+        char lineBuf[LINE_BUFFER_SIZE];
+        inFile.getline(lineBuf, LINE_BUFFER_SIZE);
+        Line line = lineBuf;
+        // 删除行首和行尾的空白字符，删除行内的注释
+        trim(line);
+        if (line.size() > 0)
+            // 不是空行，则进一步分析这一行脚本
+            parseLine(line);
+        lineCnt++;
+    }
     inFile.close();
 }
 

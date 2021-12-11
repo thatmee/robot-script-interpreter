@@ -1,4 +1,5 @@
 #pragma once
+#define GTEST
 #include <string>
 #include <vector>
 #include <fstream>
@@ -31,6 +32,7 @@ private:
         WaitToken
     };
 
+    int lineCnt;
     TokenStream tokenStream;
     StepID curStepID;
     Token popFront(TokenStream&);
@@ -47,8 +49,13 @@ private:
     void procDefault();
     void procExit();
     void error(ERR_STATE err) {
+#ifdef GTEST
+        logFile << "line " << lineCnt << "\terror:" << magic_enum::enum_name(err) << std::endl;
+
+#else
         // ´¦Àí´íÎó
         std::cout << "error:" << magic_enum::enum_name(err) << std::endl;
+#endif // GTEST
     }
 
 
@@ -56,10 +63,20 @@ private:
 protected:
     const char* scriptName;
     ParseTree parseTree;
+#ifdef GTEST
+    std::ofstream logFile;
+#endif // GTEST
+
 
 public:
-    Parser() : scriptName(nullptr) {}
-    Parser(const char* scriptName_) :scriptName(scriptName_), parseTree() {}
+    Parser() : scriptName(nullptr), lineCnt(1) {}
+    Parser(const char* scriptName_) :scriptName(scriptName_), parseTree(), lineCnt(1) {
+#ifdef GTEST
+        logFile.open("./log/log.txt");
+        if (!logFile.is_open())
+            std::cout << "fail to open log file." << std::endl;
+#endif // GTEST
+    }
     void generateParseTree() {
         std::cout << "generateParseTree" << std::endl;
     }
