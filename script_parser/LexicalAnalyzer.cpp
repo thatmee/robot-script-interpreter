@@ -66,6 +66,7 @@ LexAna::TYPE LexAna::checkLexical() {
                 break;
             case '\\':
                 state = LexAna::LEXI_STATE::ESC;
+                break;
             case '\0':
                 return LexAna::TYPE::Empty;
             default:
@@ -112,7 +113,7 @@ LexAna::TYPE LexAna::checkLexical() {
         case LexAna::LEXI_STATE::ConstStrBegin:
             forwardPointer();
             if (ch == '"')
-                state = LexAna::LEXI_STATE::ConstStrBegin;
+                state = LexAna::LEXI_STATE::ConstStrEnd;
             else if (ch == '\\')
                 state = LexAna::LEXI_STATE::ESC;
             else if (ch == '\0') {

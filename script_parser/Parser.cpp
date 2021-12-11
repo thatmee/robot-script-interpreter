@@ -10,6 +10,7 @@ Token Parser::popFront(TokenStream& stream) {
         return STREAM_EMPTY;
     Token front = stream.at(0);
     stream.erase(stream.begin());
+    return front;
 }
 
 /// @brief É¾³ý×Ö·û´® str Ê×Î²µÄ¿Õ°××Ö·û£¨\f \v \r \t £©

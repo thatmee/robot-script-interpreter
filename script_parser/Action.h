@@ -13,11 +13,10 @@ protected:
         Branch,
         Silence,
         Default,
-        Exit
+        Exit,
+        UnKnown
     };
     ActionType curType;
-    Action() {}
-    Action(ActionType type_) :curType(type_) {}
     virtual ActionType getCurType() const = 0;
 };
 

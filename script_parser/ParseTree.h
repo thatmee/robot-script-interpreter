@@ -18,15 +18,12 @@ using Expression = std::list<Item>;
 class ParseTree
 {
 public:
-    StepID entry = "";
+    StepID entry;
     std::vector<StepID> exits;
     std::list<KeyWord> keyWords;
     std::list<VarName> vars;
     std::unordered_map<StepID, StepActVec> stepTable;
     ParseTree() {}
-    ~ParseTree() {
-        //  Õ∑≈ Action ÷∏’Î
-        std::cout << "release Action pointers." << std::endl;
-    }
+    ~ParseTree();
     void output();
 };

@@ -35,12 +35,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)build\$(ProjectName)\$(Configuration)\$(PlatformTarget)\link</OutDir>
     <IntDir>$(SolutionDir)build\$(ProjectName)\$(Configuration)\$(PlatformTarget)\compile</IntDir>
-    <IncludePath>D:\programs\Microsoft Visual Studio\boost_1_77_0;%(AdditionalIncludeDirectories);$(SolutionDir)script_parser\;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)lib;D:\programs\Microsoft Visual Studio\boost_1_77_0;%(AdditionalIncludeDirectories);$(SolutionDir)script_parser\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)build\$(ProjectName)\$(Configuration)\$(PlatformTarget)\link</OutDir>
     <IntDir>$(SolutionDir)build\$(ProjectName)\$(Configuration)\$(PlatformTarget)\compile</IntDir>
-    <IncludePath>D:\programs\Microsoft Visual Studio\boost_1_77_0;%(AdditionalIncludeDirectories);$(SolutionDir)script_parser\;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)lib;D:\programs\Microsoft Visual Studio\boost_1_77_0;%(AdditionalIncludeDirectories);$(SolutionDir)script_parser\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -76,6 +76,8 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -91,6 +93,8 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

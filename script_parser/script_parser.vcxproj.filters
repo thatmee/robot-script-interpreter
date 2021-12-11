@@ -18,9 +18,6 @@
     <ClInclude Include="Parser.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Interpreter.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="ParseTree.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -33,9 +30,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Parser.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Interpreter.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ParseTree.cpp">
