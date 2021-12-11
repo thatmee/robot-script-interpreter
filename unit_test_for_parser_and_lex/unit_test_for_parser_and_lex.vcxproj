@@ -35,12 +35,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)build\$(ProjectName)\$(Configuration)\$(PlatformTarget)\link</OutDir>
     <IntDir>$(SolutionDir)build\$(ProjectName)\$(Configuration)\$(PlatformTarget)\compile</IntDir>
-    <IncludePath>$(SolutionDir)lib;D:\programs\Microsoft Visual Studio\boost_1_77_0;%(AdditionalIncludeDirectories);$(SolutionDir)script_parser\;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)lib;$(SolutionDir);%(AdditionalIncludeDirectories);$(SolutionDir)script_parser\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)build\$(ProjectName)\$(Configuration)\$(PlatformTarget)\link</OutDir>
     <IntDir>$(SolutionDir)build\$(ProjectName)\$(Configuration)\$(PlatformTarget)\compile</IntDir>
-    <IncludePath>$(SolutionDir)lib;D:\programs\Microsoft Visual Studio\boost_1_77_0;%(AdditionalIncludeDirectories);$(SolutionDir)script_parser\;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)lib;$(SolutionDir);%(AdditionalIncludeDirectories);$(SolutionDir)script_parser\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

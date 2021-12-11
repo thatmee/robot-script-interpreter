@@ -23,6 +23,28 @@ void Parser::trim(std::string& str) {
     str.erase(str.find_last_not_of(ANNOTATION_SYMBOL) + 1); //删除注释，包括单行注释和行内注释
 }
 
+/// @brief 
+/// @param s 
+/// @param result 
+/// @param delim 
+void Parser::splitString(const std::string& s, std::vector<std::string>& result, const std::string& delim)
+{
+    std::string::size_type pos1, pos2;
+    std::string constStr = "";
+    pos2 = s.find_first_of(delim);
+    pos1 = 0;
+    while (std::string::npos != pos2)
+    {
+        std::string tmp = s.substr(pos1, pos2 - pos1);
+        if (!tmp.empty()) {
+            result.push_back(tmp);
+        }
+        pos1 = s.find_first_not_of(delim, pos2 + 1);
+        pos2 = s.find_first_of(delim, pos1);
+    }
+    if (pos1 != s.length())
+        result.push_back(s.substr(pos1));
+}
 
 /// @brief 对脚本文件进行语法分析，负责打开、关闭文件，将文件分行
 void Parser::parseFile() {
@@ -43,7 +65,38 @@ void Parser::parseFile() {
 /// @brief 
 /// @param line 
 void Parser::parseLine(Line line) {
-    boost::split(tokenStream, line, boost::is_any_of(BLANKS), boost::token_compress_on);
+    //boost::split(tokenStream, line, boost::is_any_of(BLANKS), boost::token_compress_on);
+    splitString(line, tokenStream, BLANKS);
+
+    //TODO 需要仔细想想！！有没有什么好的方法？
+    // 字符串中如果含有空白字符，也会被分割开，需要进行合并处理
+    if (tokenStream[0] == "Out") {
+        TokenStream tmpTokenStream;
+        Token tmpConstStr = "";
+        int cnt = 0; // 1 表示扫描到了一个双引号
+        for (TokenStream::iterator iter = tokenStream.begin(); iter != tokenStream.end(); iter++) {
+
+            // 匹配到了非转义字符的双引号
+            if (std::regex_match(*iter, std::regex(".*[^\\]\".*|.*\\\\\".*"))) {
+                tmpConstStr += *iter;
+                // 已经扫描到一个双引号，则这个与之对应，形成一个字符串，加入 stream 并将变量清零
+                if (cnt) {
+                    tmpTokenStream.push_back(tmpConstStr);
+                    tmpConstStr = "";
+                    cnt = 0;
+                }
+                // 扫描到一个字符串的起始双引号，cnt 加一
+                else cnt++;
+            }
+            // 当前步骤在字符串的扫描中，所有 token 都属于字符串
+            else if (cnt) {
+                tmpConstStr += *iter;
+            }
+            // 当前不在字符串的扫描中，且没有找到双引号，将 token 加入 stream
+            else
+                tmpTokenStream.push_back(*iter);
+        }
+    }
     procTokens();
 }
 

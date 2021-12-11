@@ -21,7 +21,7 @@
     <ClInclude Include="ParseTree.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Action.h">
+    <ClInclude Include="Action.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="LexicalAnalyzer.h">
@@ -33,9 +33,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ParseTree.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Action.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="LexicalAnalyzer.cpp">

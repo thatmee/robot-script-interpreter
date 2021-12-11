@@ -1,8 +1,8 @@
 #pragma once
 #include <iostream>
 #include <fstream>
-#include "ParseTree.h"
-#include "Parser.h"
+#include "LexAndParser/ParseTree.h"
+#include "LexAndParser/Parser.h"
 
 class ScriptServer
 {

@@ -3,17 +3,14 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
-#include <string.hpp>
-#include <magic_enum.hpp>
+#include <lib\magic_enum.hpp>
 #include "ParseTree.h"
 #include "LexicalAnalyzer.h"
-#include "Action.h"
+#include "Action.hpp"
 
 using Line = std::string;
 using Token = std::string;
 using TokenStream = std::vector<Token>;
-
-
 
 class Parser
 {
@@ -38,6 +35,7 @@ private:
     StepID curStepID;
     Token popFront(TokenStream&);
     void trim(std::string&);
+    void splitString(const std::string&, std::vector<std::string>&, const std::string&);
     void parseFile();
     void parseLine(Line);
     void procTokens();

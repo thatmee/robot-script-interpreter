@@ -7,7 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unit_test_for_parser_and_le
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Interpreter", "Interpreter\Interpreter.vcxproj", "{BF8A2242-6B92-46C6-8D11-70DB8704F429}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "script_interpreter", "LexAndParser\LexAndParser.vcxproj", "{0328A3AF-BB9E-4B06-96BA-B090B755BE41}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LexAndParser", "LexAndParser\LexAndParser.vcxproj", "{0328A3AF-BB9E-4B06-96BA-B090B755BE41}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

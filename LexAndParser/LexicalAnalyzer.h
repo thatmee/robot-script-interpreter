@@ -40,5 +40,10 @@ public:
         Empty
     };
     LexAna(std::string word) : word(word), index(0), ch('\0') {}
+    void setWord(std::string word) {
+        this->word = word;
+        index = 0;
+        ch = '\0';
+    }
     TYPE checkLexical();
 };

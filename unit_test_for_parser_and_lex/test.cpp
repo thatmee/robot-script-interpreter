@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "LexicalAnalyzer.h"
-#include "Parser.h"
+#include "LexAndParser/LexicalAnalyzer.h"
+#include "LexAndParser/Parser.h"
 
 TEST(checkLexical, Identifier) {
     EXPECT_TRUE(LexAna::TYPE::Identifier == LexAna("abc123_").checkLexical());
@@ -56,3 +56,4 @@ TEST(checkLexical, Punc) {
 TEST(checkLexical, Empty) {
     EXPECT_TRUE(LexAna::TYPE::Empty == LexAna("").checkLexical());
 }
+
