@@ -15,16 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ScriptServer.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Parser.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Interpreter.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="User.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ParseTree.h">
@@ -33,24 +27,24 @@
     <ClInclude Include="Action.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="LexicalAnalyzer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ScriptServer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Parser.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Interpreter.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="User.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="ParseTree.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Action.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LexicalAnalyzer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

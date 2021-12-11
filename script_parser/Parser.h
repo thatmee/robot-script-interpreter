@@ -1,7 +1,13 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <fstream>
+#include <iostream>
+#include <string.hpp>
+#include <magic_enum.hpp>
 #include "ParseTree.h"
+#include "LexicalAnalyzer.h"
+#include "Action.h"
 
 using Line = std::string;
 using Token = std::string;
@@ -14,13 +20,25 @@ class Parser
 private:
     enum class ERR_STATE
     {
-        UnknownToken
+        UnknownToken,
+        DuplicatedStep,
+        TooManyTokens,
+        TooFewTokens,
+        LexicalError,
+        WrongExprssion,
+        WrongType
     };
+    enum class EXPR_STATE
+    {
+        WaitAdd,
+        WaitToken
+    };
+
     TokenStream tokenStream;
-    TokenStream::iterator cur;
+    StepID curStepID;
+    Token popFront(TokenStream&);
     void trim(std::string&);
     void parseFile();
-
     void parseLine(Line);
     void procTokens();
     void procStep();
@@ -30,7 +48,10 @@ private:
     void procSilence();
     void procDefault();
     void procExit();
-    void error(ERR_STATE);
+    void error(ERR_STATE err) {
+        // ¥¶¿Ì¥ÌŒÛ
+        std::cout << "error:" << magic_enum::enum_name(err) << std::endl;
+    }
 
 
 
@@ -39,7 +60,9 @@ protected:
     ParseTree parseTree;
 
 public:
-    Parser() {}
+    Parser() : scriptName(nullptr) {}
     Parser(const char* scriptName_) :scriptName(scriptName_), parseTree() {}
-    void generateParseTree();
+    void generateParseTree() {
+        std::cout << "generateParseTree" << std::endl;
+    }
 };

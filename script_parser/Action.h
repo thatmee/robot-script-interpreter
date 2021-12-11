@@ -12,12 +12,12 @@ protected:
         Listen,
         Branch,
         Silence,
-        Do,
         Default,
         Exit
     };
     ActionType curType;
     Action() {}
+    Action(ActionType type_) :curType(type_) {}
     virtual ActionType getCurType() const = 0;
 };
 
@@ -49,25 +49,35 @@ public:
 class Branch : public Action {
 private:
     KeyWord keyWord;
+    StepID nextStep;
 public:
-    Branch(KeyWord keyWord_) {
+    Branch(KeyWord keyWord_, StepID nextStep_) {
         curType = ActionType::Branch;
         this->keyWord = keyWord_;
+        this->nextStep = nextStep_;
     }
     ActionType getCurType() const { return curType; }
 };
 
 /// @brief 动作：判断用户是否有回复
 class Silence : public Action {
+private:
+    StepID nextStepID;
 public:
-    Silence() { curType = ActionType::Silence; }
+    Silence(StepID next) : nextStepID(next) {
+        curType = Action::ActionType::Silence;
+    }
     ActionType getCurType() const { return curType; }
 };
 
 /// @brief 动作：默认分支
 class Default : public Action {
+private:
+    StepID nextStepID;
 public:
-    Default() { curType = ActionType::Default; }
+    Default(StepID next) : nextStepID(next) {
+        curType = Action::ActionType::Default;
+    }
     ActionType getCurType() const { return curType; }
 };
 
@@ -75,17 +85,5 @@ public:
 class Exit : public Action {
 public:
     Exit() { curType = ActionType::Exit; }
-    ActionType getCurType() const { return curType; }
-};
-
-/// @brief 动作：跳转到某个步骤
-class Do : public Action {
-private:
-    StepID nextStep;
-public:
-    Do(StepID nextStep_) {
-        curType = ActionType::Do;
-        this->nextStep = nextStep_;
-    }
     ActionType getCurType() const { return curType; }
 };
