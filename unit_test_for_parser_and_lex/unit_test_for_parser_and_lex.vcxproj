@@ -55,12 +55,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\script_parser\script_parser.vcxproj">
-      <Project>{0328a3af-bb9e-4b06-96ba-b090b755be41}</Project>
-    </ProjectReference>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ProjectReference Include="..\LexAndParser\LexAndParser.vcxproj">
+      <Project>{0328a3af-bb9e-4b06-96ba-b090b755be41}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
