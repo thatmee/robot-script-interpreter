@@ -1,7 +1,10 @@
 #include "LexicalAnalyzer.h"
 
-void LexAna::forwardPointer() {
-    if (index < word.size()) {
+
+void LexAna::forwardPointer()
+{
+    if (index < word.size())
+    {
         ch = word.at(index);
         index++;
     }
@@ -9,26 +12,38 @@ void LexAna::forwardPointer() {
         ch = '\0';
 }
 
-bool LexAna::isLetter() {
+
+bool LexAna::isLetter()
+{
     if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'))
         return true;
     else
         return false;
 }
-bool LexAna::isDigit() {
+
+
+bool LexAna::isDigit()
+{
     if (ch >= '0' && ch <= '9')
         return true;
     else
         return false;
 }
 
-void LexAna::error() {
+
+void LexAna::error()
+{
 
 }
 
-LexAna::TYPE LexAna::checkLexical() {
+
+LexAna::TYPE LexAna::checkLexical()
+{
+    // 实现逻辑为词法的状态转换图，详见开发文档
+
     LEXI_STATE state = LexAna::LEXI_STATE::Entry;
-    while (1) {
+    while (1)
+    {
         switch (state)
         {
         case LexAna::LEXI_STATE::Entry:
@@ -72,7 +87,8 @@ LexAna::TYPE LexAna::checkLexical() {
             default:
                 if (isLetter())
                     state = LexAna::LEXI_STATE::Identifier;
-                else {
+                else
+                {
                     error();
                     return LexAna::TYPE::Err;
                 }
@@ -85,7 +101,8 @@ LexAna::TYPE LexAna::checkLexical() {
                 state = LexAna::LEXI_STATE::Identifier;
             else if (ch == '\0')
                 return LexAna::TYPE::Identifier;
-            else {
+            else
+            {
                 error();
                 return LexAna::TYPE::Err;
             }
@@ -94,7 +111,8 @@ LexAna::TYPE LexAna::checkLexical() {
             forwardPointer();
             if (ch == '\0')
                 return LexAna::TYPE::Zero;
-            else {
+            else
+            {
                 error();
                 return LexAna::TYPE::Err;
             }
@@ -105,7 +123,8 @@ LexAna::TYPE LexAna::checkLexical() {
                 state = state;
             else if (ch == '\0')
                 return LexAna::TYPE::Number;
-            else {
+            else
+            {
                 error();
                 return LexAna::TYPE::Err;
             }
@@ -116,7 +135,8 @@ LexAna::TYPE LexAna::checkLexical() {
                 state = LexAna::LEXI_STATE::ConstStrEnd;
             else if (ch == '\\')
                 state = LexAna::LEXI_STATE::ESC;
-            else if (ch == '\0') {
+            else if (ch == '\0')
+            {
                 error();
                 return LexAna::TYPE::Err;
             }
@@ -127,7 +147,8 @@ LexAna::TYPE LexAna::checkLexical() {
             forwardPointer();
             if (ch == '\0')
                 return LexAna::TYPE::ConstStr;
-            else {
+            else
+            {
                 error();
                 return LexAna::TYPE::Err;
             }
@@ -136,7 +157,8 @@ LexAna::TYPE LexAna::checkLexical() {
             forwardPointer();
             if (isLetter() || isDigit() || ch == '_')
                 state = LexAna::LEXI_STATE::Identifier;
-            else {
+            else
+            {
                 error();
                 return LexAna::TYPE::Err;
             }
@@ -147,7 +169,8 @@ LexAna::TYPE LexAna::checkLexical() {
             forwardPointer();
             if (ch == '\0')
                 return LexAna::TYPE::Punc;
-            else {
+            else
+            {
                 error();
                 return LexAna::TYPE::Err;
             }
@@ -156,18 +179,12 @@ LexAna::TYPE LexAna::checkLexical() {
             forwardPointer();
             if (ch == '"' || ch == '\\')
                 state = LexAna::LEXI_STATE::ConstStrBegin;
-            else {
+            else
+            {
                 error();
                 return LexAna::TYPE::Err;
             }
             break;
-            //case LexAna::LEXI_STATE::Err:
-            //    break;
-            //case LexAna::LEXI_STATE::Exit:
-            //    break;
-            //default:
-            //    break;
         }
     }
-
 }
