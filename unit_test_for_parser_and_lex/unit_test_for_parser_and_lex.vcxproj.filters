@@ -15,10 +15,24 @@
     <None Include="test_scripts\unit-test-1.rsl">
       <Filter>测试文件</Filter>
     </None>
+    <None Include="test_scripts\unit-test-wrong.rsl">
+      <Filter>测试文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="测试文件">
       <UniqueIdentifier>{54d697bb-c703-453d-b8db-a64d5382d6b1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="测试文件\sample_log">
+      <UniqueIdentifier>{fdeef651-e330-4ed7-82c2-915a70f0c94c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="test_scripts\sample_log\unit-test-correct.rsl.log">
+      <Filter>测试文件\sample_log</Filter>
+    </Text>
+    <Text Include="test_scripts\sample_log\unit-test-wrong.rsl.log">
+      <Filter>测试文件\sample_log</Filter>
+    </Text>
   </ItemGroup>
 </Project>
