@@ -1,0 +1,44 @@
+TestUnknownToken a
+Step
+Step _wrongName
+Step proc redundantToken
+Step testRepeat
+Step testRepeat
+
+Step testOut
+    Out      # no parameters
+    Out wrongVarName + "hello"
+    Out $name + "quotation marks don't correspond
+    Out "wrong ESC \character"
+    Out $nothing_after_add +
+    Out "no add" "wrong"
+    Out "still no add" $wrong
+    Out "wrong " * "punctuation"
+    Exit
+    Out "test no corresponding step"
+
+Step testListen
+    Listen    # no parameters
+    Listen 1 90 # too many parameters
+    Listen notInteger
+    
+Step testBranch
+    Branch "onlyOnePara"
+    Branch "one" two redundantPara
+    Branch para1 para2  # para1 is not string
+    Branch "para1" -para2  # para2 is not identifier
+    Branch "repeatKey" testRepeatKey1
+    Branch "repeatKey" testRepeatKey2
+    
+Step testSilence
+    Silence # no parameters
+    Silence silenceProc proc2 # too many parameters
+    Silence 9para-isNotIdentifier
+    
+Step testDefault
+    Default # no paras
+    Default defaultProc  redundantProc
+    Default _para  # para is not identifier
+    
+Step testExit
+    Exit exitProc # too many paras

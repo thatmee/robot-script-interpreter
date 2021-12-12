@@ -1,0 +1,20 @@
+# 这是一个单行注释
+# the content below is the test for right situation
+Step outTest#this is a comment in line
+    Out $name + "您好，请问您需要什么帮助？"
+       Out     "test" +  "inline"     + "blanks"                        
+    
+    Out "test\\character"
+    Out "test double quotation:at the end\""
+    Out "test double \" quotation \" :middle"
+    Out "test double quotation and the backslash\\\"\\"
+    Out "test" + $var1 + $var2 + "mutiple" + "expressions" + $var3
+
+Step listenTest
+    Listen 20
+    Exit
+Step branchTest
+    Branch "投诉" complainProc
+    Branch "账单" billProc
+    Silence silenceProc
+    Default defaultProc

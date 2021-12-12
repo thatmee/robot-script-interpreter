@@ -1,3 +1,6 @@
+#include <iostream>
+#include <fstream>
+#include <string>
 #include "pch.h"
 #include "LexAndParser/LexicalAnalyzer.h"
 #include "LexAndParser/Parser.h"
@@ -52,6 +55,34 @@ TEST(checkLexical, Empty) {
     EXPECT_TRUE(LexAna::TYPE::Empty == LexAna("").checkLexical());
 }
 
-TEST(parser, rightTest) {
+TEST(parser, correctTest) {
+    Parser p("./test_scripts/unit-test-correct.rsl");
+    p.generateParseTree();
+    std::ifstream sampleLog, realLog;
+    sampleLog.open("./test_scripts/sample_log/unit-test-correct.rsl.log");
+    realLog.open("./log/unit-test-correct.rsl.log");
+    std::string sampleStr, realStr;
+    while (!sampleLog.eof())
+        sampleStr += sampleLog.get();
+    while (!realLog.eof())
+        realStr += realLog.get();
+    sampleLog.close();
+    realLog.close();
+    EXPECT_TRUE(sampleStr == realStr);
+}
 
+TEST(parser, wrongTest) {
+    Parser p("./test_scripts/unit-test-wrong.rsl");
+    p.generateParseTree();
+    std::ifstream sampleLog, realLog;
+    sampleLog.open("./test_scripts/sample_log/unit-test-wrong.rsl.log");
+    realLog.open("./log/unit-test-wrong.rsl.log");
+    std::string sampleStr, realStr;
+    while (!sampleLog.eof())
+        sampleStr += sampleLog.get();
+    while (!realLog.eof())
+        realStr += realLog.get();
+    sampleLog.close();
+    realLog.close();
+    EXPECT_TRUE(sampleStr == realStr);
 }

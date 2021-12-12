@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <lib\magic_enum.hpp>
+#include <codecvt>
 #include "ParseTree.h"
 #include "LexicalAnalyzer.h"
 #include "Action.hpp"
@@ -24,6 +25,7 @@ private:
         TooFewTokens,
         LexicalError,
         WrongExprssion,
+        NoCorrespondingStep,
         WrongType
     };
     enum class EXPR_STATE
@@ -34,7 +36,7 @@ private:
 
     int lineCnt;
     TokenStream tokenStream;
-    StepID curStepID;
+    StepID curStepID = "";
     Token popFront(TokenStream&);
     void trim(std::string&);
     void splitString(const std::string&, std::vector<std::string>&, const std::string&);
@@ -48,20 +50,11 @@ private:
     void procSilence();
     void procDefault();
     void procExit();
-    void error(ERR_STATE err) {
-#ifdef GTEST
-        logFile << "line " << lineCnt << "\terror:" << magic_enum::enum_name(err) << std::endl;
-
-#else
-        // ´¦Àí´íÎó
-        std::cout << "error:" << magic_enum::enum_name(err) << std::endl;
-#endif // GTEST
-    }
-
+    void error(ERR_STATE err);
 
 
 protected:
-    const char* scriptName;
+    const char* scriptPath;
     ParseTree parseTree;
 #ifdef GTEST
     std::ofstream logFile;
@@ -69,15 +62,7 @@ protected:
 
 
 public:
-    Parser() : scriptName(nullptr), lineCnt(1) {}
-    Parser(const char* scriptName_) :scriptName(scriptName_), parseTree(), lineCnt(1) {
-#ifdef GTEST
-        logFile.open("./log/log.txt");
-        if (!logFile.is_open())
-            std::cout << "fail to open log file." << std::endl;
-#endif // GTEST
-    }
-    void generateParseTree() {
-        std::cout << "generateParseTree" << std::endl;
-    }
+    Parser() : scriptPath(nullptr), lineCnt(1) {}
+    Parser(const char* scriptPath_);
+    void generateParseTree();
 };

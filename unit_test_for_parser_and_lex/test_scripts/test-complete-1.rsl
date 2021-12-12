@@ -1,0 +1,39 @@
+Step welcome
+    Out $name + "您好，请问有什么可以帮您?"
+    Default listenAndAct
+Step listenAndAct
+    Listen 10
+    Branch "投诉" complainProc
+    Branch "账单" billProc
+    Branch "宽带" broadBandProc
+    Branch "维修" serviceProc
+    Branch "人工" artificialProc
+    Silence silenceProc
+    Default defaultProc
+Step complainProc
+    Out "您的意见是我们改进工作的动力，请问您还有什么补充?"
+    Listen 50
+    Default thanks
+Step thanks
+    Out "感谢您的来电，再见"
+    Exit
+Step billProc
+    Out "您的本月账单是" + $amount + "元"
+    Out "请问还有什么可以帮您？"
+    Default listenAndAct
+Step silenceProc
+    Out "听不清，请您大声一点可以吗"
+    Listen 10
+    Branch "投诉" complainProc
+    Branch "账单" billProc
+    Branch "宽带" broadBandProc
+    Branch "维修" serviceProc
+    Branch "人工" artificialProc
+    Silence noOneProc
+    Default defaultProc
+Step noOneProc
+    Out "对不起，系统检测到您可能已离线，随后将自动退出。"
+    Default thanks
+Step defaultProc
+    Out "不好意思，我不太懂您的意思，您可以尝试以下关键词：投诉、账单、宽带、维修、人工，或者"
+    Default listenAndAct

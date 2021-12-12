@@ -5,6 +5,41 @@ const std::string BLANKS("\f\v\r\t ");
 const char ANNOTATION_SYMBOL = '#';
 const Token STREAM_EMPTY = "00";
 
+Parser::Parser(const char* scriptPath_)
+    :scriptPath(scriptPath_), parseTree(), lineCnt(1)
+{
+#ifdef GTEST
+    std::string pathStr(scriptPath);
+    std::string scriptName;
+    std::string::size_type sep = pathStr.find_last_of("/");
+    std::string::size_type suf = pathStr.find_last_of(".");
+    if (sep == std::string::npos)
+        sep = 0;
+    if (suf == std::string::npos)
+        scriptName = pathStr.substr(sep);
+    else if (sep < suf)
+        scriptName = pathStr.substr(sep, suf);
+    else
+        scriptName = "error";
+    std::string logName = "./log/" + scriptName + ".log";
+    logFile.open(logName);
+    if (!logFile.is_open())
+        std::cout << "fail to open error log." << std::endl;
+#endif // GTEST
+}
+
+
+void Parser::error(ERR_STATE err) {
+#ifdef GTEST
+    logFile << "line " << lineCnt << "\terror:" << magic_enum::enum_name(err) << std::endl;
+
+#else
+    // 处理错误
+    std::cout << "error:" << magic_enum::enum_name(err) << std::endl;
+#endif // GTEST
+}
+
+
 Token Parser::popFront(TokenStream& stream) {
     if (stream.empty())
         return STREAM_EMPTY;
@@ -18,9 +53,19 @@ Token Parser::popFront(TokenStream& stream) {
 /// @param str 
 void Parser::trim(std::string& str) {
     if (str.empty()) return;
-    str.erase(0, str.find_first_not_of(BLANKS));  // 删除行首空白字符
-    str.erase(str.find_last_not_of(BLANKS) + 1);  // 删除行尾空白字符
-    str.erase(str.find_last_not_of(ANNOTATION_SYMBOL) + 1); //删除注释，包括单行注释和行内注释
+
+    //删除注释，包括单行注释和行内注释
+    std::string::size_type commentPos = str.find_first_of(ANNOTATION_SYMBOL);
+    if (commentPos != std::string::npos)
+        str.erase(commentPos);
+    // 删除行首空白字符
+    str.erase(0, str.find_first_not_of(BLANKS));
+    // 删除行尾空白字符
+    std::string::size_type lastNotBlank = str.find_last_not_of(BLANKS);
+    std::string::size_type lastBlank = str.find_last_of(BLANKS);
+    if (lastNotBlank != std::string::npos && lastBlank != std::string::npos && lastNotBlank < lastBlank) {
+        str.erase(lastNotBlank + 1);
+    }
 }
 
 /// @brief 
@@ -49,8 +94,13 @@ void Parser::splitString(const std::string& s, std::vector<std::string>& result,
 /// @brief 对脚本文件进行语法分析，负责打开、关闭文件，将文件分行
 void Parser::parseFile() {
     std::ifstream inFile;
-    inFile.open(scriptName);
-    // 逐行读取脚本文件
+    inFile.open(scriptPath);
+    // 文件打开失败
+    if (!inFile.is_open()) {
+        std::cout << "fail to open script." << std::endl;
+        return;
+    }
+    // 文件打开成功，逐行读取脚本文件
     while (!inFile.eof()) {
         char lineBuf[LINE_BUFFER_SIZE];
         inFile.getline(lineBuf, LINE_BUFFER_SIZE);
@@ -69,36 +119,62 @@ void Parser::parseFile() {
 /// @param line 
 void Parser::parseLine(Line line) {
     //boost::split(tokenStream, line, boost::is_any_of(BLANKS), boost::token_compress_on);
+    tokenStream.clear();
     splitString(line, tokenStream, BLANKS);
 
     //TODO 需要仔细想想！！有没有什么好的方法？
     // 字符串中如果含有空白字符，也会被分割开，需要进行合并处理
-    if (tokenStream[0] == "Out") {
+    if (tokenStream[0] == "Out" || tokenStream[0] == "Branch") {
         TokenStream tmpTokenStream;
         Token tmpConstStr = "";
         int cnt = 0; // 1 表示扫描到了一个双引号
-        for (TokenStream::iterator iter = tokenStream.begin(); iter != tokenStream.end(); iter++) {
-
-            // 匹配到了非转义字符的双引号
-            if (std::regex_match(*iter, std::regex(".*[^\\]\".*|.*\\\\\".*"))) {
-                tmpConstStr += *iter;
+        for (TokenStream::iterator iter = tokenStream.begin(); iter != tokenStream.end(); iter++)
+        {
+            // 当前 Token 含有一对非转义的双引号
+            if (std::regex_match(*iter, std::regex(R"(^([^\\]|\\.)*"([^\\]|\\.)*".*$)")))
+            {
+                // 如果 cnt 为 1，出现了形如 "abc""def" 的串，进入错误处理模块
+                if (cnt)
+                {
+                    error(Parser::ERR_STATE::LexicalError);
+                    return;
+                }
+                // 否则，直接将当前 Token 加入 tmpTokenStream
+                else
+                    tmpTokenStream.push_back(*iter);
+            }
+            // 当前 Token 中只有一个非转义字符的双引号
+            else if (std::regex_match(*iter, std::regex(R"(([^\\]|\\.)*".*)")))
+            {
                 // 已经扫描到一个双引号，则这个与之对应，形成一个字符串，加入 stream 并将变量清零
-                if (cnt) {
+                if (cnt)
+                {
+                    tmpConstStr += " ";
+                    tmpConstStr += *iter;
                     tmpTokenStream.push_back(tmpConstStr);
                     tmpConstStr = "";
                     cnt = 0;
                 }
                 // 扫描到一个字符串的起始双引号，cnt 加一
-                else cnt++;
+                else
+                {
+                    tmpConstStr += *iter;
+                    cnt++;
+                }
             }
-            // 当前步骤在字符串的扫描中，所有 token 都属于字符串
-            else if (cnt) {
+            // 当前 Token 中没有双引号
+            // 但是 cnt 为 1，当前步骤处于字符串的扫描中，将 token 加入字符串
+            else if (cnt)
+            {
+                tmpConstStr += " ";
                 tmpConstStr += *iter;
             }
-            // 当前不在字符串的扫描中，且没有找到双引号，将 token 加入 stream
+            // 当前 Token 中没有双引号，且当前不在字符串的扫描中
+            // 将 token 加入 tmpTokenStream
             else
                 tmpTokenStream.push_back(*iter);
         }
+        tokenStream = tmpTokenStream;
     }
     procTokens();
 }
@@ -162,6 +238,12 @@ void Parser::procStep() {
 
 
 void Parser::procOut() {
+    // 当前动作没有对应的 Step，进入错误处理模块
+    if (curStepID == "") {
+        error(Parser::ERR_STATE::NoCorrespondingStep);
+        return;
+    }
+
     // Out 后面没有内容，进入错误处理模块
     if (tokenStream.empty()) {
         error(ERR_STATE::TooFewTokens);
@@ -199,16 +281,18 @@ void Parser::procOut() {
                 else
                 {
                     // 没有出现 + 号，进入错误处理模块
-                    error(ERR_STATE::UnknownToken);
+                    error(ERR_STATE::WrongExprssion);
                     return;
                 }
                 break;
             case Parser::EXPR_STATE::WaitToken:
                 // 出现的 token 是变量或者字符串
                 if (item.at(0) == '$' || item.at(0) == '"') {
-                    // 加入变量表
-                    if (item.at(0) == '$')
+                    // 出现的 token 是变量，且不在表中，加入变量表
+                    if (item.at(0) == '$'
+                        && (std::find(parseTree.vars.begin(), parseTree.vars.end(), item) == parseTree.vars.end()))
                         parseTree.vars.push_back(item);
+                    // 变量或字符串都加入表达式
                     expr.push_back(item);
                     // token 之后没有其他内容了，表达式正确，退出循环
                     if (tokenStream.empty())
@@ -218,7 +302,7 @@ void Parser::procOut() {
                 }
                 // 出现了未知的项目，进入错误处理模块
                 else {
-                    error(ERR_STATE::UnknownToken);
+                    error(ERR_STATE::WrongExprssion);
                     return;
                 }
                 break;
@@ -233,6 +317,12 @@ void Parser::procOut() {
 }
 
 void Parser::procListen() {
+    // 当前动作没有对应的 Step，进入错误处理模块
+    if (curStepID == "") {
+        error(Parser::ERR_STATE::NoCorrespondingStep);
+        return;
+    }
+
     // Listen 后面没有内容，进入错误处理模块
     if (tokenStream.empty()) {
         error(ERR_STATE::TooFewTokens);
@@ -262,6 +352,12 @@ void Parser::procListen() {
 }
 
 void Parser::procBranch() {
+    // 当前动作没有对应的 Step，进入错误处理模块
+    if (curStepID == "") {
+        error(Parser::ERR_STATE::NoCorrespondingStep);
+        return;
+    }
+
     // Branch 参数个数小于 2，进入错误处理模块
     if (tokenStream.size() < 2) {
         error(ERR_STATE::TooFewTokens);
@@ -291,19 +387,26 @@ void Parser::procBranch() {
     // 加入语法树
     parseTree.stepTable[curStepID].push_back(std::make_unique<Branch>(answer, nextStepID));
 
-    // 加入用户关键字表
-    parseTree.keyWords.push_back(answer);
+    // 如果关键字不存在，加入用户关键字表
+    if (std::find(parseTree.keyWords.begin(), parseTree.keyWords.end(), answer) == parseTree.keyWords.end())
+        parseTree.keyWords.push_back(answer);
 }
 
 
 void Parser::procSilence() {
+    // 当前动作没有对应的 Step，进入错误处理模块
+    if (curStepID == "") {
+        error(Parser::ERR_STATE::NoCorrespondingStep);
+        return;
+    }
+
     // silence 后面没有内容，进入错误处理模块
     if (tokenStream.empty()) {
         error(ERR_STATE::TooFewTokens);
         return;
     }
 
-    // silence 后的参数大于 1，进入错误处理模块
+    // silence 后的参数大于 1 个，进入错误处理模块
     if (tokenStream.size() > 1) {
         error(ERR_STATE::TooManyTokens);
         return;
@@ -321,6 +424,12 @@ void Parser::procSilence() {
 }
 
 void Parser::procDefault() {
+    // 当前动作没有对应的 Step，进入错误处理模块
+    if (curStepID == "") {
+        error(Parser::ERR_STATE::NoCorrespondingStep);
+        return;
+    }
+
     // default 后面没有内容，进入错误处理模块
     if (tokenStream.empty()) {
         error(ERR_STATE::TooFewTokens);
@@ -345,5 +454,27 @@ void Parser::procDefault() {
 }
 
 void Parser::procExit() {
+    // 当前动作没有对应的 Step，进入错误处理模块
+    if (curStepID == "") {
+        error(Parser::ERR_STATE::NoCorrespondingStep);
+        return;
+    }
+
+    // Exit 后有其他内容，进入错误处理模块
+    if (tokenStream.size() > 0) {
+        error(ERR_STATE::TooManyTokens);
+        return;
+    }
+
     parseTree.exits.push_back(curStepID);
+
+    // Exit 之后，当前步骤不能再出现其他动作，将当前步骤置为空
+    curStepID = "";
+}
+
+
+void Parser::generateParseTree() {
+    std::cout << "generateParseTree" << std::endl;
+    parseFile();
+    std::cout << "parse file finished." << std::endl;
 }
