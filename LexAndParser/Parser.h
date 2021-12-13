@@ -108,15 +108,15 @@ protected:
     /// @brief 要分析的脚本文件路径，一个 Parser 类对应一个脚本
     const char* scriptPath;
 
-    /// @brief 语法分析结果所保存的语法树
-    ParseTree parseTree;
-
 #ifdef GTEST
     std::ofstream logFile;
 #endif // GTEST
 
 
 public:
+    /// @brief 语法分析结果所保存的语法树
+    ParseTree parseTree;
+
     Parser() : scriptPath(nullptr), lineCnt(1) {}
     Parser(const char* scriptPath_);
 
