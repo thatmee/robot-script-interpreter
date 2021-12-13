@@ -62,9 +62,9 @@ DWORD WINAPI SendMessageThread(LPVOID IpParameter)
             return 0;
         }
         else*/
-        {
+        /*{
             talk.append("\n");
-        }
+        }*/
         printf("I Say:(\"quit\"to exit):");
         cout << talk;
         for (int i = 0; i < clientSocketGroup.size(); ++i) {
@@ -90,7 +90,7 @@ DWORD WINAPI ReceiveMessageThread(LPVOID IpParameter)
             clientSocketGroup.erase(result);
             closesocket(ClientSocket);
             ReleaseSemaphore(bufferMutex, 1, NULL);     // V（资源占用完毕）
-            printf("\nAttention: A Client has leave...\n", 200, 0);
+            printf("\nAttention: A Client has leave...\n");
             break;
         }
 

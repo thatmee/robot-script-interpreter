@@ -1,10 +1,15 @@
 #pragma once
+#include <cstdio>
 #include <iostream>
+#include <cstring>
+#include <vector>
+#include <iterator>
 #include <string>
+#include <algorithm>
 #include <lib\magic_enum.hpp>
 #include <WinSock2.h>
+#include <Windows.h>
 #pragma comment(lib,"ws2_32.lib")
-
 
 class SocketServer
 {
@@ -28,17 +33,20 @@ private:
     /// @param buf 保存读取到的字符
     /// @param size 读取的数量
     /// @return -1 表示读取失败，否则为成功读取的字符数
-    int readn(char* buf, int size);
+    int readn(SOCKET srcSocket, char* buf, int size);
 
     /// @brief 向对端发送指定数量的字符
     /// @param msg 要发送的内容
     /// @param size 要发送的字符数量
     /// @return -1 表示发送失败，否则为成功发送的字符数
-    int writen(const char* msg, int size);
+    int writen(SOCKET dstSocket, const char* msg, int size);
 
     /// @brief 错误处理函数
     /// @param err 错误状态
     void error(SocketServer::ERR_STA err);
+
+    DWORD static WINAPI SendMessageThread(LPVOID IpParameter);
+    DWORD static WINAPI ReceiveMessageThread(LPVOID IpParameter);
 public:
 
     /// @brief 套接字库
@@ -47,14 +55,22 @@ public:
     /// @brief 服务器端用来监听的套接字
     SOCKET srvSocket;
 
-    /// @brief 对应客户端连接的套接字
-    SOCKET accSocket;
+    /*/// @brief 对应客户端连接的套接字
+    SOCKET accSocket;*/
+
+    /// @brief 连接到的所有客户端套接字
+    std::vector<SOCKET> clientSocketGroup;
 
     /// @brief 连接的客户端地址族
     SOCKADDR_IN clientAddr;
 
     /// @brief 服务器地址族
     SOCKADDR_IN srvAddr;
+
+    /// @brief 令其能互斥成功正常通信的信号量句柄
+    HANDLE bufferMutex;
+
+    HANDLE sendThread;
 
     SocketServer(int connectNumMax_);
 
@@ -71,6 +87,11 @@ public:
     /// @brief 接收对端消息
     /// @param msg 保存接收到的消息
     /// @return -1 表示接收失败，否则为成功接收的字符数
-    int Recv(std::string& msg);
+    int Recv(SOCKET srcSocket, std::string& msg);
+};
+
+struct Para {
+    SocketServer* p;
+    SOCKET sockConn;
 };
 

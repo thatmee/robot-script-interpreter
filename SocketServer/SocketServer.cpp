@@ -4,6 +4,9 @@ SocketServer::SocketServer(int connectNumMax_ = 10)
     : connectNumMax(connectNumMax_)
 {
     initSocketServer();
+
+    bufferMutex = CreateSemaphore(NULL, 1, 1, NULL);
+    sendThread = CreateThread(NULL, 0, SendMessageThread, this, 0, NULL);
 }
 
 SocketServer::~SocketServer() {
@@ -111,7 +114,13 @@ int SocketServer::Send(std::string msg)
     memcpy(sendPackage + 4, msg.data(), msg.size());
 
     // 发送数据
-    int ret = writen(sendPackage, msg.size() + 4);
+    int ret = 0;
+    for (int i = 0; i < clientSocketGroup.size(); ++i)
+    {
+        ret = writen(clientSocketGroup[i], sendPackage, msg.size() + 4);
+    }
+
+    //int ret = writen(sendPackage, msg.size() + 4);
     delete[] sendPackage;
     return ret;
 
@@ -119,17 +128,17 @@ int SocketServer::Send(std::string msg)
     std::cout << "send: " << msg << std::endl;*/
 }
 
-int SocketServer::Recv(std::string& msg)
+int SocketServer::Recv(SOCKET srcSocket, std::string& msg)
 {
     // 读数据头
     int len = 0;
-    readn((char*)&len, 4);
+    readn(srcSocket, (char*)&len, 4);
     len = ntohl(len);
     std::cout << "数据块大小: " << len << std::endl;
 
     // 根据读出的长度分配内存
     char* buf = new char[len + 1];
-    int ret = readn(buf, len);
+    int ret = readn(srcSocket, buf, len);
     if (ret != len)
     {
         msg = "";
@@ -147,7 +156,7 @@ int SocketServer::Recv(std::string& msg)
     //std::cout << "recv: " << buf << std::endl;
 }
 
-int SocketServer::readn(char* buf, int size)
+int SocketServer::readn(SOCKET srcSocket, char* buf, int size)
 {
     int nread = 0;
     int left = size;
@@ -155,7 +164,7 @@ int SocketServer::readn(char* buf, int size)
 
     while (left > 0)
     {
-        if ((nread = recv(accSocket, p, left, 0)) > 0)
+        if ((nread = recv(srcSocket, p, left, 0)) > 0)
         {
             p += nread;
             left -= nread;
@@ -168,7 +177,7 @@ int SocketServer::readn(char* buf, int size)
     return size;
 }
 
-int SocketServer::writen(const char* msg, int size)
+int SocketServer::writen(SOCKET dstSocket, const char* msg, int size)
 {
     int left = size;
     int nwrite = 0;
@@ -176,7 +185,7 @@ int SocketServer::writen(const char* msg, int size)
 
     while (left > 0)
     {
-        if ((nwrite = send(accSocket, msg, left, 0)) > 0)
+        if ((nwrite = send(dstSocket, msg, left, 0)) > 0)
         {
             p += nwrite;
             left -= nwrite;
@@ -187,4 +196,54 @@ int SocketServer::writen(const char* msg, int size)
         }
     }
     return size;
+}
+
+DWORD WINAPI SocketServer::SendMessageThread(LPVOID IpParameter)
+{
+    SocketServer* p = (SocketServer*)IpParameter;
+    while (1) {
+        std::string msg;
+        std::getline(std::cin, msg);
+        WaitForSingleObject(p->bufferMutex, INFINITE);     // P（资源未被占用）
+    /*  if("quit" == msg){
+            ReleaseSemaphore(bufferMutex, 1, NULL);     // V（资源占用完毕）
+            return 0;
+        }
+        else*/
+        /*{
+            msg.append("\n");
+        }*/
+        /*printf("I Say:(\"quit\"to exit):");
+        cout << msg;*/
+
+        std::cout << "I Say: " << msg << std::endl;
+        p->Send(msg);
+        ReleaseSemaphore(p->bufferMutex, 1, NULL);     // V（资源占用完毕）
+    }
+    return 0;
+}
+
+
+DWORD WINAPI SocketServer::ReceiveMessageThread(LPVOID IpParameter)
+{
+    SOCKET ClientSocket = (SOCKET)(LPVOID)IpParameter;
+    while (1) {
+        char recvBuf[300];
+        recv(ClientSocket, recvBuf, 200, 0);
+        WaitForSingleObject(bufferMutex, INFINITE);     // P（资源未被占用）
+
+        if (recvBuf[0] == 'q' && recvBuf[1] == 'u' && recvBuf[2] == 'i' && recvBuf[3] == 't' && recvBuf[4] == '\0') {
+            vector<SOCKET>::iterator result = find(clientSocketGroup.begin(), clientSocketGroup.end(), ClientSocket);
+            clientSocketGroup.erase(result);
+            closesocket(ClientSocket);
+            ReleaseSemaphore(bufferMutex, 1, NULL);     // V（资源占用完毕）
+            printf("\nAttention: A Client has leave...\n");
+            break;
+        }
+
+        printf("%s Says: %s\n", "One Client", recvBuf);     // 接收信息
+
+        ReleaseSemaphore(bufferMutex, 1, NULL);     // V（资源占用完毕）
+    }
+    return 0;
 }

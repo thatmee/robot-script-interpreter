@@ -3,11 +3,36 @@
 SocketClient::SocketClient()
 {
     initSocketClient();
+    Send("\nAttention: A Client has enter...\n");
+
+    bufferMutex = CreateSemaphore(NULL, 1, 1, NULL);
+
+    sendThread = CreateThread(NULL, 0, SendMessageThread, this, 0, NULL);
+    receiveThread = CreateThread(NULL, 0, ReceiveMessageThread, this, 0, NULL);
+
+    std::cout << "create thread over" << std::endl;
 }
+
+void SocketClient::createThread()
+{
+
+}
+
+void SocketClient::waitThread()
+{
+    WaitForSingleObject(sendThread, INFINITE);  // 等待线程结束
+}
+
 SocketClient::~SocketClient()
 {
     if (cliSocket)
         closesocket(cliSocket);
+    CloseHandle(sendThread);
+    CloseHandle(receiveThread);
+    CloseHandle(bufferMutex);
+
+    printf("End linking...\n");
+    printf("\n");
 }
 
 void SocketClient::error(SocketClient::ERR_STA err)
@@ -148,4 +173,53 @@ int SocketClient::writen(const char* msg, int size)
         }
     }
     return size;
+}
+
+DWORD WINAPI SocketClient::SendMessageThread(LPVOID IpParameter)
+{
+    SocketClient* p = (SocketClient*)IpParameter;
+    while (1) {
+        std::string msg;
+        std::getline(std::cin, msg);
+        WaitForSingleObject(p->bufferMutex, INFINITE);     // P（资源未被占用）
+        //if ("quit" == msg) {
+        //    msg.push_back('\0');
+        //    //          send(sockClient, msg.c_str(), msg.size(), 0);
+        //    send(cliSocket, msg.c_str(), 200, 0);
+        //    break;
+        //}
+        //else {
+        //    msg.append("\n");
+        //}
+        //printf("\nI Say:(\"quit\"to exit):");
+        if (msg == "quit")
+            break;
+        std::cout << std::endl << "I Say:(\"quit\"to exit):" << msg << std::endl;
+
+        //std::cout << msg;
+        //  send(sockClient, msg.c_str(), msg.size(), 0); // 发送信息
+        //send(cliSocket, msg.c_str(), 200, 0); // 发送信息
+
+        p->Send(msg);
+        ReleaseSemaphore(p->bufferMutex, 1, NULL);     // V（资源占用完毕）
+    }
+    return 0;
+}
+
+DWORD WINAPI SocketClient::ReceiveMessageThread(LPVOID IpParameter)
+{
+    SocketClient* p = (SocketClient*)IpParameter;
+    while (1) {
+        //char recvBuf[300];
+        //recv(cliSocket, recvBuf, 200, 0);
+
+        std::string recvMsg;
+        p->Recv(recvMsg);
+        WaitForSingleObject(p->bufferMutex, INFINITE);     // P（资源未被占用）
+
+        //printf("%s Says: %s\n", "Server", recvBuf);     // 接收信息
+        std::cout << "Server says: " << recvMsg << std::endl;
+        ReleaseSemaphore(p->bufferMutex, 1, NULL);     // V（资源占用完毕）
+    }
+    return 0;
 }

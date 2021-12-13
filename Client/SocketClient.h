@@ -1,10 +1,15 @@
 #pragma once
 #include <iostream>
+#include <cstdio>
 #include <string>
+#include <cstring>
 #include <lib\magic_enum.hpp>
 #include <WinSock2.h>
+#include <Windows.h>
 #include <WS2tcpip.h>
 #pragma comment(lib,"ws2_32.lib")
+
+
 
 class SocketClient
 {
@@ -38,6 +43,17 @@ private:
     /// @return -1 表示发送失败，否则为成功发送的字符数
     int writen(const char* msg, int size);
 
+    /// @brief 
+    /// @param IpParameter 
+    /// @return 
+    DWORD static WINAPI SendMessageThread(LPVOID IpParameter);
+
+    /// @brief 
+    /// @param IpParameter 
+    /// @return 
+    DWORD static WINAPI ReceiveMessageThread(LPVOID IpParameter);
+
+
 public:
 
     /// @brief 套接字库
@@ -49,8 +65,21 @@ public:
     /// @brief 服务器地址族
     SOCKADDR_IN srvAddr;
 
+    /// @brief 令其能互斥成功正常通信的信号量句柄
+    HANDLE bufferMutex;
+
+    /// @brief 发送消息的线程
+    HANDLE sendThread;
+
+    /// @brief 接收消息的线程
+    HANDLE receiveThread;
+
     SocketClient();
     ~SocketClient();
+
+    void createThread();
+
+    void waitThread();
 
     /// @brief 向对端发送消息
     /// @param msg 要发送的消息字符串
