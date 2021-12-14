@@ -26,6 +26,9 @@ private:
 
     int connectNumMax = 10;
 
+    ///// @brief 初始化 socket 以及监听线程
+    //void init();
+
     /// @brief 初始化 socket 服务器端
     void initSocketServer();
 
@@ -70,6 +73,7 @@ public:
     /// @brief 令其能互斥成功正常通信的信号量句柄
     HANDLE bufferMutex;
 
+    /// @brief 服务器用于发送消息的线程
     HANDLE sendThread;
 
     SocketServer(int connectNumMax_);
@@ -77,21 +81,27 @@ public:
     ~SocketServer();
 
     /// @brief 等待服务器端的连接
-    void Accept();
+    //void Accept();
 
     /// @brief 向对端发送消息
     /// @param msg 要发送的消息字符串
     /// @return -1 表示发送失败，否则为成功发送的字符数
-    int Send(std::string msg);
+    int Send(SOCKET dstSocket, std::string msg);
 
     /// @brief 接收对端消息
     /// @param msg 保存接收到的消息
     /// @return -1 表示接收失败，否则为成功接收的字符数
     int Recv(SOCKET srcSocket, std::string& msg);
+
+    /// @brief 循环接收客户端连接请求
+    void Accept();
+
+    /// @brief 等待线程结束
+    void waitThread();
 };
 
 struct Para {
     SocketServer* p;
-    SOCKET sockConn;
+    SOCKET sock;
 };
 

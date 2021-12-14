@@ -9,11 +9,25 @@ SocketServer::SocketServer(int connectNumMax_ = 10)
     sendThread = CreateThread(NULL, 0, SendMessageThread, this, 0, NULL);
 }
 
-SocketServer::~SocketServer() {
+//void SocketServer::init()
+//{
+//
+//}
+
+SocketServer::~SocketServer()
+{
     if (srvSocket)
         closesocket(srvSocket);
-    if (accSocket)
-        closesocket(accSocket);
+
+    // 删除连接到的客户 Socket
+    for (int i = 0; i < clientSocketGroup.size(); ++i)
+    {
+        if (clientSocketGroup[i])
+            closesocket(clientSocketGroup[i]);
+    }
+
+    CloseHandle(sendThread);
+    CloseHandle(bufferMutex);
 }
 
 void SocketServer::error(SocketServer::ERR_STA err)
@@ -78,34 +92,19 @@ void SocketServer::initSocketServer()
 
 }
 
-void SocketServer::Accept()
-{
-    int len = sizeof(SOCKADDR);
-    accSocket = accept(srvSocket, (SOCKADDR*)&clientAddr, &len);
-    if (accSocket == SOCKET_ERROR)
-    {
-        error(SocketServer::ERR_STA::accept_SOCKET_ERROR);
-        return;
-    }
-}
-
-
-//void SocketServer::Send(std::string buf, const int bufLen)
+//void SocketServer::Accept()
 //{
-//    char* sendBuf = buf.data();
-//    send(accSocket, sendBuf, strlen(sendBuf) + 1, 0);
-//    std::cout << "send: " << buf << std::endl;
-//}
-//
-//void SocketServer::Recv(std::string& buf, const int bufLen)
-//{
-//    char* recvBuf = new char[bufLen + 1];
-//    recv(accSocket, recvBuf, bufLen, 0);
-//    buf = std::string(recvBuf);
-//    std::cout << "recv: " << buf << std::endl;
+//    int len = sizeof(SOCKADDR);
+//    //accSocket = accept(srvSocket, (SOCKADDR*)&clientAddr, &len);
+//    if (accSocket == SOCKET_ERROR)
+//    {
+//        error(SocketServer::ERR_STA::accept_SOCKET_ERROR);
+//        return;
+//    }
 //}
 
-int SocketServer::Send(std::string msg)
+
+int SocketServer::Send(SOCKET dstSocket, std::string msg)
 {
     // 申请内存空间: 数据长度 + 包头4字节(存储数据长度)
     char* sendPackage = new char[msg.size() + 4];
@@ -114,18 +113,9 @@ int SocketServer::Send(std::string msg)
     memcpy(sendPackage + 4, msg.data(), msg.size());
 
     // 发送数据
-    int ret = 0;
-    for (int i = 0; i < clientSocketGroup.size(); ++i)
-    {
-        ret = writen(clientSocketGroup[i], sendPackage, msg.size() + 4);
-    }
-
-    //int ret = writen(sendPackage, msg.size() + 4);
+    int ret = writen(dstSocket, sendPackage, msg.size() + 4);
     delete[] sendPackage;
     return ret;
-
-    /*send(cliSocket, sendPackage, strlen(sendPackage) + 1, 0);
-    std::cout << "send: " << msg << std::endl;*/
 }
 
 int SocketServer::Recv(SOCKET srcSocket, std::string& msg)
@@ -149,11 +139,6 @@ int SocketServer::Recv(SOCKET srcSocket, std::string& msg)
     delete[] buf;
 
     return len;
-
-    //char* recvBuf = new char[bufLen + 1];
-    //recv(cliSocket, recvBuf, bufLen, 0);
-    //buf = std::string(recvBuf);
-    //std::cout << "recv: " << buf << std::endl;
 }
 
 int SocketServer::readn(SOCKET srcSocket, char* buf, int size)
@@ -170,9 +155,7 @@ int SocketServer::readn(SOCKET srcSocket, char* buf, int size)
             left -= nread;
         }
         else if (nread == -1)
-        {
             return -1;
-        }
     }
     return size;
 }
@@ -191,9 +174,7 @@ int SocketServer::writen(SOCKET dstSocket, const char* msg, int size)
             left -= nwrite;
         }
         else if (nwrite == -1)
-        {
             return -1;
-        }
     }
     return size;
 }
@@ -201,24 +182,26 @@ int SocketServer::writen(SOCKET dstSocket, const char* msg, int size)
 DWORD WINAPI SocketServer::SendMessageThread(LPVOID IpParameter)
 {
     SocketServer* p = (SocketServer*)IpParameter;
-    while (1) {
+    while (1)
+    {
         std::string msg;
         std::getline(std::cin, msg);
-        WaitForSingleObject(p->bufferMutex, INFINITE);     // P（资源未被占用）
-    /*  if("quit" == msg){
-            ReleaseSemaphore(bufferMutex, 1, NULL);     // V（资源占用完毕）
-            return 0;
-        }
-        else*/
-        /*{
-            msg.append("\n");
-        }*/
-        /*printf("I Say:(\"quit\"to exit):");
-        cout << msg;*/
 
-        std::cout << "I Say: " << msg << std::endl;
-        p->Send(msg);
-        ReleaseSemaphore(p->bufferMutex, 1, NULL);     // V（资源占用完毕）
+        // P（资源未被占用）
+        WaitForSingleObject(p->bufferMutex, INFINITE);
+        int ret = 0;
+        // 向所有的客户端发送同样的消息
+        for (int i = 0; i < p->clientSocketGroup.size(); ++i)
+        {
+            if ((ret = p->Send(p->clientSocketGroup[i], msg)) < 0)
+                break;
+        }
+        if (ret < 0)
+            std::cout << "send error;" << std::endl;
+        else
+            std::cout << "I say: " << msg << std::endl;
+        // V（资源占用完毕）
+        ReleaseSemaphore(p->bufferMutex, 1, NULL);
     }
     return 0;
 }
@@ -226,24 +209,66 @@ DWORD WINAPI SocketServer::SendMessageThread(LPVOID IpParameter)
 
 DWORD WINAPI SocketServer::ReceiveMessageThread(LPVOID IpParameter)
 {
-    SOCKET ClientSocket = (SOCKET)(LPVOID)IpParameter;
-    while (1) {
-        char recvBuf[300];
-        recv(ClientSocket, recvBuf, 200, 0);
-        WaitForSingleObject(bufferMutex, INFINITE);     // P（资源未被占用）
+    struct Para* para = (struct Para*)IpParameter;
 
-        if (recvBuf[0] == 'q' && recvBuf[1] == 'u' && recvBuf[2] == 'i' && recvBuf[3] == 't' && recvBuf[4] == '\0') {
-            vector<SOCKET>::iterator result = find(clientSocketGroup.begin(), clientSocketGroup.end(), ClientSocket);
-            clientSocketGroup.erase(result);
-            closesocket(ClientSocket);
-            ReleaseSemaphore(bufferMutex, 1, NULL);     // V（资源占用完毕）
-            printf("\nAttention: A Client has leave...\n");
+    while (1)
+    {
+        std::string recvMsg;
+        para->p->Recv(para->sock, recvMsg);
+
+        // P（资源未被占用）
+        WaitForSingleObject(para->p->bufferMutex, INFINITE);
+        // 客户端退出，关闭该客户端的套接字，释放相应资源
+        if (recvMsg == "quit")
+        {
+            std::vector<SOCKET>::iterator result = std::find(para->p->clientSocketGroup.begin(), para->p->clientSocketGroup.end(), para->sock);
+            para->p->clientSocketGroup.erase(result);
+            closesocket(para->sock);
+            std::cout << std::endl << "Attention: A Client has leave..." << std::endl;
+            // V（资源占用完毕）
+            ReleaseSemaphore(para->p->bufferMutex, 1, NULL);
             break;
         }
 
-        printf("%s Says: %s\n", "One Client", recvBuf);     // 接收信息
-
-        ReleaseSemaphore(bufferMutex, 1, NULL);     // V（资源占用完毕）
+        std::cout << "One Client Says: " << recvMsg << std::endl;
+        // V（资源占用完毕）
+        ReleaseSemaphore(para->p->bufferMutex, 1, NULL);
     }
     return 0;
+}
+
+void SocketServer::Accept()
+{
+    // 不断等待客户端请求的到来
+    while (true)
+    {
+        // 收到一个客户端的连接
+        SOCKET sockConn = accept(srvSocket, NULL, NULL);
+        if (SOCKET_ERROR != sockConn)
+            clientSocketGroup.push_back(sockConn);
+
+        // 构造线程参数的结构体
+        struct Para para;
+        para.p = (SocketServer*)this;
+        para.sock = sockConn;
+
+        // 创建一个线程，用来接收新的客户端的信息
+        HANDLE receiveThread = CreateThread(NULL, 0, ReceiveMessageThread, (LPVOID)&para, 0, NULL);
+
+        // P（资源未被占用）
+        WaitForSingleObject(bufferMutex, INFINITE);
+        if (NULL == receiveThread)
+            std::cout << std::endl << "CreatThread AnswerThread() failed." << std::endl;
+        else
+            std::cout << std::endl << "Create Receive Client Thread OK." << std::endl;
+
+        // V（资源占用完毕）
+        ReleaseSemaphore(bufferMutex, 1, NULL);
+    }
+}
+
+void SocketServer::waitThread()
+{
+    // 等待线程结束
+    WaitForSingleObject(sendThread, INFINITE);
 }

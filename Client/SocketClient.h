@@ -24,6 +24,9 @@ private:
 
     int connectNumMax = 10;
 
+    ///// @brief 初始化客户端的 socket 以及用于发送接收消息的线程
+    //void init();
+
     /// @brief 错误处理函数
     /// @param err 错误状态
     void error(SocketClient::ERR_STA err);
@@ -76,8 +79,6 @@ public:
 
     SocketClient();
     ~SocketClient();
-
-    void createThread();
 
     void waitThread();
 
