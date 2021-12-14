@@ -3,7 +3,7 @@
 SocketClient::SocketClient()
 {
     initSocketClient();
-    Send("\nAttention: A Client has enter...\n");
+    //Send("\nAttention: A Client has enter...\n");
 
     bufferMutex = CreateSemaphore(NULL, 1, 1, NULL);
 

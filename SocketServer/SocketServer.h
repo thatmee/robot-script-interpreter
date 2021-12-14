@@ -6,10 +6,17 @@
 #include <iterator>
 #include <string>
 #include <algorithm>
+#include <unordered_map>
 #include <lib\magic_enum.hpp>
 #include <WinSock2.h>
 #include <Windows.h>
 #pragma comment(lib,"ws2_32.lib")
+
+using ClientSockID = std::string;
+using IdSockMap = std::unordered_map<ClientSockID, SOCKET>;
+using IdSockPair = std::pair<ClientSockID, SOCKET>;
+using SockSyncMap = std::unordered_map<SOCKET, HANDLE>;
+using SockSyncPair = std::pair<SOCKET, HANDLE>;
 
 class SocketServer
 {
@@ -21,7 +28,11 @@ private:
         socket_INVALID_SOCKET,
         bind_SOCKET_ERROR,
         listen_SOCKET_ERROR,
-        accept_SOCKET_ERROR
+        accept_SOCKET_ERROR,
+        create_thread_ERROR,
+        cli_ID_duplicated_ERROR,
+        cli_ID_not_exist_ERROR,
+        no_socket_ERROR
     };
 
     int connectNumMax = 10;
@@ -48,8 +59,10 @@ private:
     /// @param err 错误状态
     void error(SocketServer::ERR_STA err);
 
-    DWORD static WINAPI SendMessageThread(LPVOID IpParameter);
+    DWORD static WINAPI CliSendMessageThread(LPVOID IpParameter);
     DWORD static WINAPI ReceiveMessageThread(LPVOID IpParameter);
+    DWORD static WINAPI ManageSendThread(LPVOID IpParameter);
+
 public:
 
     /// @brief 套接字库
@@ -61,8 +74,6 @@ public:
     /*/// @brief 对应客户端连接的套接字
     SOCKET accSocket;*/
 
-    /// @brief 连接到的所有客户端套接字
-    std::vector<SOCKET> clientSocketGroup;
 
     /// @brief 连接的客户端地址族
     SOCKADDR_IN clientAddr;
@@ -73,8 +84,21 @@ public:
     /// @brief 令其能互斥成功正常通信的信号量句柄
     HANDLE bufferMutex;
 
-    /// @brief 服务器用于发送消息的线程
-    HANDLE sendThread;
+    HANDLE sendSync;
+
+    /// @brief 用于管理所有发送消息的任务
+    HANDLE sendManagerThread;
+
+    /// @brief 连接到的所有客户端套接字
+    //std::vector<SOCKET> clientSocketGroup;
+    IdSockMap cliSockMap;
+
+
+    /// @brief 针对不同发送消息线程的同步信号量
+    SockSyncMap cliSockSyncMap;
+
+    //std::vector<HANDLE> cliSendThreads;
+    //std::vector<HANDLE> recvThreads;
 
     SocketServer(int connectNumMax_);
 
