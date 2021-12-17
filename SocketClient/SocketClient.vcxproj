@@ -22,7 +22,7 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{c0425a9b-ca20-44c2-bf3e-e2ec349db915}</ProjectGuid>
-    <RootNamespace>Client</RootNamespace>
+    <RootNamespace>SocketClient</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>SocketClient</ProjectName>
   </PropertyGroup>
