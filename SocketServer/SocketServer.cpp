@@ -264,7 +264,8 @@ DWORD WINAPI SocketServer::CliSendMessageThread(LPVOID IpParameter)
 
         // 向指定的客户端发送消息
 
-        ret = para->p->Send(para->sock, msg);
+        //ret = para->p->Send(para->sock, msg);
+        ret = send(para->sock, msg.c_str(), 200, 0);
 
 
         if (ret < 0)
