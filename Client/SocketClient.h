@@ -14,6 +14,9 @@
 class SocketClient
 {
 private:
+    /************************** 错误处理 ***********************************/
+
+    /// @brief 所有错误状态
     enum class ERR_STA
     {
         WSAStartup_ReturnNoneZero,
@@ -22,17 +25,27 @@ private:
         connect_ERROR
     };
 
-    int connectNumMax = 10;
-
-    ///// @brief 初始化客户端的 socket 以及用于发送接收消息的线程
-    //void init();
-
     /// @brief 错误处理函数
     /// @param err 错误状态
     void error(SocketClient::ERR_STA err);
 
+
+    /*********************** socket 初始化 **********************************/
+
+    /// @brief 套接字库
+    WSADATA wsaData;
+
+    /// @brief 客户端的套接字
+    SOCKET cliSocket;
+
+    /// @brief 服务器地址族
+    SOCKADDR_IN srvAddr;
+
     /// @brief 初始化客户端 socket
     void initSocketClient();
+
+
+    /******************** socket 读写函数的封装 *******************************/
 
     /// @brief 从对端读取指定数量的字符
     /// @param buf 保存读取到的字符
@@ -46,27 +59,8 @@ private:
     /// @return -1 表示发送失败，否则为成功发送的字符数
     int writen(const char* msg, int size);
 
-    /// @brief 
-    /// @param IpParameter 
-    /// @return 
-    DWORD static WINAPI SendMessageThread(LPVOID IpParameter);
 
-    /// @brief 
-    /// @param IpParameter 
-    /// @return 
-    DWORD static WINAPI ReceiveMessageThread(LPVOID IpParameter);
-
-
-public:
-
-    /// @brief 套接字库
-    WSADATA wsaData;
-
-    /// @brief 客户端的套接字
-    SOCKET cliSocket;
-
-    /// @brief 服务器地址族
-    SOCKADDR_IN srvAddr;
+    /*********************** C/S 通信 ***************************************/
 
     /// @brief 令其能互斥成功正常通信的信号量句柄
     HANDLE bufferMutex;
@@ -77,9 +71,25 @@ public:
     /// @brief 接收消息的线程
     HANDLE receiveThread;
 
+    /// @brief 用于安全退出线程的标志
+    bool killThrd;
+
+    /// @brief 当前客户端用于发送消息的线程
+    /// @param IpParameter this 指针
+    DWORD static WINAPI SendMessageThread(LPVOID IpParameter);
+
+    /// @brief 当前客户端用于接收消息的线程
+    /// @param IpParameter this 指针
+    DWORD static WINAPI ReceiveMessageThread(LPVOID IpParameter);
+
+
+public:
+
     SocketClient();
+
     ~SocketClient();
 
+    /// @brief 等待线程结束
     void waitThread();
 
     /// @brief 向对端发送消息

@@ -3,29 +3,26 @@
 SocketClient::SocketClient()
 {
     initSocketClient();
-    //Send("\nAttention: A Client has enter...\n");
 
     bufferMutex = CreateSemaphore(NULL, 1, 1, NULL);
-
     sendThread = CreateThread(NULL, 0, SendMessageThread, this, 0, NULL);
     receiveThread = CreateThread(NULL, 0, ReceiveMessageThread, this, 0, NULL);
+    killThrd = false;
 }
-
-//void SocketClient::init()
-//{
-//
-//}
 
 void SocketClient::waitThread()
 {
     // 等待线程结束
-    WaitForSingleObject(sendThread, INFINITE);
+    WaitForSingleObject(receiveThread, INFINITE);
 }
 
 SocketClient::~SocketClient()
 {
+    // 关闭 socket
     if (cliSocket)
         closesocket(cliSocket);
+
+    // 释放所有句柄
     CloseHandle(sendThread);
     CloseHandle(receiveThread);
     CloseHandle(bufferMutex);
@@ -40,6 +37,8 @@ void SocketClient::error(SocketClient::ERR_STA err)
 void SocketClient::initSocketClient()
 {
     int iRet = 0;
+
+    std::cout << "====================== Client ==========================" << std::endl;
 
     // 加载 2.2 版本的套接字库
     iRet = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -80,8 +79,8 @@ void SocketClient::initSocketClient()
         return;
     }
     std::cout << "done! connect to server." << std::endl;
-    std::cout << "client ready. now you can send messages." << std::endl;
-
+    std::cout << "client ready!" << std::endl;
+    std::cout << std::endl << "===================== by nanyf ==========================" << std::endl << std::endl;
 }
 
 int SocketClient::Send(std::string msg)
@@ -102,22 +101,29 @@ int SocketClient::Recv(std::string& msg)
 {
     // 读数据头
     int len = 0;
-    readn((char*)&len, 4);
-    len = ntohl(len);
-    std::cout << "数据块大小: " << len << std::endl;
-
-    // 根据读出的长度分配内存
-    char* buf = new char[len + 1];
-    int ret = readn(buf, len);
-    if (ret != len)
+    int ret = readn((char*)&len, 4);
+    if (ret == -1)
     {
+        // 没有读到数据头，对端异常
         msg = "";
         return -1;
     }
+    len = ntohl(len);
+
+    // 根据读出的长度分配内存
+    char* buf = new char[len + 1];
+    ret = readn(buf, len);
+    if (ret != len)
+    {
+        msg = "";
+        delete[] buf;
+        return -1;
+    }
+
+    // 根据读出的长度设置字符串结尾
     buf[len] = '\0';
     msg = std::string(buf);
     delete[] buf;
-
     return len;
 }
 
@@ -165,35 +171,64 @@ int SocketClient::writen(const char* msg, int size)
 
 DWORD WINAPI SocketClient::SendMessageThread(LPVOID IpParameter)
 {
+    // 传入了类的 this 指针
     SocketClient* p = (SocketClient*)IpParameter;
+
+    // 循环从命令行获取输入，并发送到服务器
     while (1) {
+        // 从命令行读取发送数据
         std::string msg;
         std::getline(std::cin, msg);
-        // P（资源未被占用）
+
+        // 退出线程标志为真，直接结束循环
+        if (p->killThrd)
+            break;
+
+        // wait (bufferMutex)
         WaitForSingleObject(p->bufferMutex, INFINITE);
         std::cout << std::endl << "I Say:(\"quit\"to exit):" << msg << std::endl;
         p->Send(msg);
-        // V（资源占用完毕）
+
+        // signal (bufferMutex)
         ReleaseSemaphore(p->bufferMutex, 1, NULL);
 
         // 输入 quit 退出
         if (msg == "quit")
+        {
+            p->killThrd = true;
             break;
+        }
     }
     return 0;
 }
 
 DWORD WINAPI SocketClient::ReceiveMessageThread(LPVOID IpParameter)
 {
+    // 传入了类的 this 指针
     SocketClient* p = (SocketClient*)IpParameter;
-    while (1) {
-        std::string recvMsg;
-        p->Recv(recvMsg);
 
-        // P（资源未被占用）
+    // 循环从服务器获取消息，并显示到命令行窗口
+    while (1) {
+        // 接收数据
+        std::string recvMsg;
+        int ret = p->Recv(recvMsg);
+
+        // 退出线程标志为真，直接结束循环
+        if (p->killThrd)
+            break;
+
+        // 返回值异常，对端连接错误，直接退出
+        if (ret < 0)
+        {
+            closesocket(p->cliSocket);
+            p->killThrd = true;
+            break;
+        }
+
+        // wait (bufferMutex)
         WaitForSingleObject(p->bufferMutex, INFINITE);
         std::cout << "Server says: " << recvMsg << std::endl;
-        // V（资源占用完毕）
+        // signal (bufferMutex)
         ReleaseSemaphore(p->bufferMutex, 1, NULL);
     }
     return 0;
