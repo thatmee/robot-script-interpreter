@@ -1,7 +1,7 @@
 #include "SocketServer.h"
 
 SocketServer::SocketServer(int connectNumMax_ = 10)
-    : connectNumMax(connectNumMax_)
+    : connectNumMax(connectNumMax_), scriptSrv(RSL_PATH)
 {
     initSocketServer();
 
@@ -81,7 +81,6 @@ void SocketServer::initSocketServer()
     }
     std::cout << "done! bind." << std::endl;
 
-
     //监听
     iRet = listen(srvSocket, connectNumMax);
     if (iRet == SOCKET_ERROR)
@@ -108,6 +107,7 @@ int SocketServer::Send(SOCKET dstSocket, std::string msg)
     delete[] sendPackage;
     return ret;
 }
+
 
 int SocketServer::Recv(SOCKET srcSocket, std::string& msg)
 {
@@ -139,6 +139,7 @@ int SocketServer::Recv(SOCKET srcSocket, std::string& msg)
     return len;
 }
 
+
 int SocketServer::readn(SOCKET srcSocket, char* buf, int size)
 {
     int nread = 0;
@@ -158,6 +159,7 @@ int SocketServer::readn(SOCKET srcSocket, char* buf, int size)
     return size;
 }
 
+
 int SocketServer::writen(SOCKET dstSocket, const char* msg, int size)
 {
     int left = size;
@@ -176,6 +178,7 @@ int SocketServer::writen(SOCKET dstSocket, const char* msg, int size)
     }
     return size;
 }
+
 
 DWORD WINAPI SocketServer::ManageSendThread(LPVOID IpParameter)
 {
@@ -225,6 +228,7 @@ DWORD WINAPI SocketServer::ManageSendThread(LPVOID IpParameter)
     }
 }
 
+
 DWORD WINAPI SocketServer::CliSendMessageThread(LPVOID IpParameter)
 {
     // 将传入参数转为原来的结构体类型
@@ -243,22 +247,45 @@ DWORD WINAPI SocketServer::CliSendMessageThread(LPVOID IpParameter)
             continue;
 
         std::string msg;
-        std::getline(std::cin, msg);
+        int ret;
+        //std::getline(std::cin, msg);
 
-        // wait (bufferMutex)
-        WaitForSingleObject(para->p->bufferMutex, INFINITE);
+        // 根据 scriptSrv 的指示执行不同的任务
+        ScriptServer::INTERPRET_STA todo = para->p->scriptSrv.srvInterpret(para->id);
+        switch (todo)
+        {
+        case ScriptServer::INTERPRET_STA::Do:
+            break;
+        case ScriptServer::INTERPRET_STA::Listen:
+            // 置为监听状态
+            para->p->listenValid[para->sock] = true;
+            WaitForSingleObject(para->p->listenSync[para->sock], INFINITE);
+            // 监听到消息后，关闭监听状态
+            para->p->listenValid[para->sock] = false;
+            break;
+        case ScriptServer::INTERPRET_STA::Exit:
+            para->p->killThrd[para->sock] = true;
+            break;
+        case ScriptServer::INTERPRET_STA::Out:
+            para->p->scriptSrv.getOutputMsg(para->id, msg);
+            // wait (bufferMutex)
+            WaitForSingleObject(para->p->bufferMutex, INFINITE);
 
-        // 向指定的客户端发送消息
-        int ret = para->p->Send(para->sock, msg);
-        if (ret < 0)
-            std::cout << "send error;" << std::endl;
-        else
-            std::cout << "I say: " << msg << std::endl;
+            // 向指定的客户端发送消息
+            ret = para->p->Send(para->sock, msg);
+            if (ret < 0)
+                std::cout << "send error;" << std::endl;
+            else
+                std::cout << "I say: " << msg << std::endl;
 
-        // signal (bufferMutex)
-        ReleaseSemaphore(para->p->bufferMutex, 1, NULL);
+            // signal (bufferMutex)
+            ReleaseSemaphore(para->p->bufferMutex, 1, NULL);
+            break;
+        default:
+            break;
+        }
 
-        // 当前发送任务完成，允许 manageSend 线程调度下一次发送任务
+        // 当前任务完成，允许 manageSend 线程调度下一次任务
         ReleaseSemaphore(para->p->sendSync, 1, NULL);
     }
     return 0;
@@ -281,6 +308,9 @@ DWORD WINAPI SocketServer::ReceiveMessageThread(LPVOID IpParameter)
         // 客户端退出，关闭该客户端的套接字，释放相应资源
         if (recvMsg == "quit" || ret < 0)
         {
+            // 删除用户
+            para->p->scriptSrv.deleteUser(para->id);
+
             // 删除 socket 对应的同步信号量, 释放 socket 和同步信号的映射
             // 注意这里顺序不能换
             CloseHandle(para->p->cliSockSyncMap[para->sock]);
@@ -310,12 +340,20 @@ DWORD WINAPI SocketServer::ReceiveMessageThread(LPVOID IpParameter)
             break;
         }
 
+        // 当服务器在 listen 的时候，将接收到的消息保存到 user 中
+        if (para->p->listenValid[para->sock])
+        {
+            para->p->scriptSrv.msgToUserInputKey(para->id, recvMsg);
+            ReleaseSemaphore(para->p->listenSync[para->sock], 1, NULL);
+        }
         std::cout << "socket " << para->sock << " says: " << recvMsg << std::endl;
+
         // signal (bufferMutex)
         ReleaseSemaphore(para->p->bufferMutex, 1, NULL);
     }
     return 0;
 }
+
 
 void SocketServer::Accept()
 {
@@ -340,8 +378,14 @@ void SocketServer::Accept()
         ClientSockID cliID;
         Recv(sockConn, cliID);
 
-        // 判断 ID 的格式是否正确
-
+        // 创建一个用户
+        if (scriptSrv.createUser(cliID) != ScriptServer::NEW_USER_STA::Succeed)
+        {
+            // 创建不成功，关闭连接、释放资源
+            closesocket(sockConn);
+            ReleaseSemaphore(bufferMutex, 1, NULL);
+            continue;
+        }
 
         if (cliSockMap.find(cliID) != cliSockMap.end())
         {
@@ -363,6 +407,13 @@ void SocketServer::Accept()
         HANDLE sendSemaphore = CreateSemaphore(NULL, 0, 1, NULL);
         cliSockSyncMap.insert(SockHandlePair(sockConn, sendSemaphore));
 
+        // 创建 socket 和用于 listen 的信号量之间的一一映射
+        HANDLE listenSemaphore = CreateSemaphore(NULL, 0, 1, NULL);
+        listenSync.insert(SockHandlePair(sockConn, listenSemaphore));
+
+        // 创建 socket 和标志 listen 是否有效的量之间的一一映射
+        listenValid.insert(SockFlagPair(sockConn, false));
+
         // 创建 socket 和管理线程关闭的标志之间的一一映射
         killThrd.insert(SockFlagPair(sockConn, false));
 
@@ -370,6 +421,7 @@ void SocketServer::Accept()
         Para* para = new Para;
         para->p = (SocketServer*)this;
         para->sock = sockConn;
+        para->id = cliID;
 
         // 创建线程，用来接收该客户端的信息
         HANDLE receiveThread = CreateThread(NULL, 0, ReceiveMessageThread, (LPVOID)para, 0, NULL);

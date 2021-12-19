@@ -2,37 +2,48 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_map>
-#include "LexAndParser/ParseTree.h"
-#include "LexAndParser/Parser.h"
-#include "User.h"
 #include "Interpreter.h"
 
-using UserTable = std::unordered_map<UserID, std::unique_ptr<User>>;
 
+using UserID = std::string;
+using UserTable = std::unordered_map<UserID, std::unique_ptr<User>>;
+using UserPair = std::pair<UserID, std::unique_ptr<User>>;
 
 class ScriptServer
 {
-private:
-    enum class ERR_STA
+public:
+    enum class NEW_USER_STA
     {
-        WrongID,
+        WrongIDFormat,
+        AlreadyExists,
+        Succeed
     };
-    Parser parser;
+
+    enum class DEL_USER_STA
+    {
+        NoSuchUser,
+        Succeed
+    };
+
+    enum class INTERPRET_STA
+    {
+        Do,
+        Listen,
+        Exit,
+        Out,
+    };
+
+    ScriptServer(const char* scriptName_);
+    ~ScriptServer();
+    ScriptServer::NEW_USER_STA createUser(UserID ID_);
+    ScriptServer::DEL_USER_STA deleteUser(UserID& ID_);
+    void msgToUserInputKey(UserID& ID_, std::string msg);
+    ScriptServer::INTERPRET_STA srvInterpret(UserID& ID_);
+    void getOutputMsg(UserID& ID_, std::string& outputMsg);
+
+private:
     Interpreter interpreter;
     UserTable users;
-    bool ready;
-
-
-    void initServer();
-    void initParser();
     bool isValidFormat(UserID& id);
-    void error(ScriptServer::ERR_STA err);
-    void anaInputMsg();
-    void doAction();
-    void updateUserData();
-
-public:
-    ScriptServer(const char* scriptName_) : parser(scriptName_), interpreter() {}
-
-    void createUser(UserID ID_, UserName name_ = "");
+    void error(ScriptServer::NEW_USER_STA err);
 };

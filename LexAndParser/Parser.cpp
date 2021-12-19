@@ -1,5 +1,6 @@
 #include "Parser.h"
 
+Parser::~Parser() {}
 
 Parser::Parser(const char* scriptPath_)
     :scriptPath(scriptPath_), parseTree(), lineCnt(1)

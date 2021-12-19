@@ -4,7 +4,7 @@
 /// @brief 动作的抽象类
 class Action
 {
-protected:
+public:
     /// @brief 所有动作的类型
     enum class ActionType
     {
@@ -16,11 +16,13 @@ protected:
         Exit,
         UnKnown
     };
-    ActionType curType;
 
     /// @brief 纯虚函数，由子类实现
     /// @return 当前动作类型
     virtual ActionType getCurType() const = 0;
+
+protected:
+    ActionType curType = Action::ActionType::UnKnown;
 };
 
 /// @brief 动作：输出
@@ -37,6 +39,10 @@ public:
         this->outInfo = outInfo_;
     }
     ActionType getCurType() const { return curType; }
+    void getOutInfo(Expression& result)
+    {
+        result = outInfo;
+    }
 };
 
 /// @brief 动作：等待用户答复
@@ -52,6 +58,7 @@ public:
         this->listenTime = listenTime_;
     }
     ActionType getCurType() const { return curType; }
+    int getListenTime() { return listenTime; };
 };
 
 /// @brief 动作：分支跳转
@@ -70,6 +77,8 @@ public:
         this->nextStep = nextStep_;
     }
     ActionType getCurType() const { return curType; }
+    void getKeyWord(KeyWord& result) { result = keyWord; }
+    void getNextStepID(StepID& result) { result = nextStep; }
 };
 
 /// @brief 动作：判断用户沉默
@@ -84,6 +93,7 @@ public:
         curType = Action::ActionType::Silence;
     }
     ActionType getCurType() const { return curType; }
+    void getNextStepID(StepID& result) { result = nextStepID; }
 };
 
 /// @brief 动作：默认分支
@@ -98,6 +108,7 @@ public:
         curType = Action::ActionType::Default;
     }
     ActionType getCurType() const { return curType; }
+    void getNextStepID(StepID& result) { result = nextStepID; }
 };
 
 /// @brief 动作：退出

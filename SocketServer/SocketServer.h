@@ -11,6 +11,7 @@
 #include <WinSock2.h>
 #include <Windows.h>
 #pragma comment(lib,"ws2_32.lib")
+#include "Interpreter/ScriptServer.h"
 
 using ClientSockID = std::string;
 using IdSockMap = std::unordered_map<ClientSockID, SOCKET>;
@@ -114,7 +115,15 @@ private:
     DWORD static WINAPI ReceiveMessageThread(LPVOID IpParameter);
 
 
+    /*********************** script interpreter ******************************/
+
+    ScriptServer scriptSrv;
+
+    SockHandleMap listenSync;
+    SockFlagMap listenValid;
+
 public:
+    const char* RSL_PATH = "D:/01-0_library/class/programming_design_practice/script_parser/unit_test_for_parser_and_lex/test_scripts/test-complete-1.rsl";
 
     SocketServer(int connectNumMax_);
 
@@ -141,5 +150,6 @@ public:
 struct Para {
     SocketServer* p;
     SOCKET sock;
+    ClientSockID id;
 };
 

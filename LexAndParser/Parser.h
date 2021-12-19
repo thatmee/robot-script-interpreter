@@ -119,6 +119,7 @@ public:
 
     Parser() : scriptPath(nullptr), lineCnt(1) {}
     Parser(const char* scriptPath_);
+    ~Parser();
 
     /// @brief 根据脚本文件生成语法树
     void generateParseTree();
