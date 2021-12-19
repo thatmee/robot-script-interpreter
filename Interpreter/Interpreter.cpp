@@ -7,10 +7,7 @@ Interpreter::Interpreter(const char* scriptName_) : parser(scriptName_)
     std::cout << "init interpreter..." << std::endl;
 }
 
-Interpreter::~Interpreter()
-{
-
-}
+Interpreter::~Interpreter() {}
 
 void Interpreter::initParseTree()
 {
@@ -70,7 +67,9 @@ Interpreter::STA Interpreter::interpret(User& user)
             // 直接返回
             return Interpreter::STA::Listen;
         }
-        else if (curActType == Action::ActionType::Branch)
+        else if (curActType == Action::ActionType::Branch
+            || curActType == Action::ActionType::Default
+            || curActType == Action::ActionType::Silence)
         {
             interpretBranch(actions, user);
         }
@@ -138,8 +137,8 @@ void Interpreter::interpretBranch(StepActVec& actions, User& user)
             user.actIndex = -1;
             break;
         }
-        // 用户有输入，且当前为 default 分支
-        else if (user.inputKey != "" && actions[i]->getCurType() == Action::ActionType::Default)
+        // 不管用户有没有输出，只要到达了 default 分支，就要进行跳转
+        else if (actions[i]->getCurType() == Action::ActionType::Default)
         {
             defaultIndex = i;
             Default* d = static_cast<Default*>(actions[i].get());

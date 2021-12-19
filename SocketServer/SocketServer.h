@@ -100,7 +100,10 @@ private:
     HANDLE sendSync;
 
     /// @brief 用于管理所有发送任务的线程句柄
-    HANDLE sendManagerThread;
+    //HANDLE sendManagerThread;
+
+    /// @brief 管理整个服务器的关闭
+    HANDLE allKill;
 
     /// @brief 管理所有发送任务的线程
     /// @param IpParameter this 指针
@@ -123,7 +126,7 @@ private:
     SockFlagMap listenValid;
 
 public:
-    const char* RSL_PATH = "D:/01-0_library/class/programming_design_practice/script_parser/unit_test_for_parser_and_lex/test_scripts/test-complete-1.rsl";
+    const char* RSL_PATH = "./test-complete-1.rsl";
 
     SocketServer(int connectNumMax_);
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "LexAndParser/Parser.h"
+#include "unit_test_for_interpreter_and_scriptSrv/pch.h"
 
 class User;
 

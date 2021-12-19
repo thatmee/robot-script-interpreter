@@ -1,14 +1,15 @@
 #pragma once
-#define GTEST
 #include <string>
 #include <vector>
 #include <fstream>
 #include <iostream>
 #include <lib\magic_enum.hpp>
 #include <codecvt>
+#include <regex>
 #include "ParseTree.h"
 #include "LexicalAnalyzer.h"
 #include "Action.hpp"
+#define PARSE_GTEST
 
 using Line = std::string;
 using Token = std::string;
@@ -108,9 +109,9 @@ protected:
     /// @brief 要分析的脚本文件路径，一个 Parser 类对应一个脚本
     const char* scriptPath;
 
-#ifdef GTEST
+#ifdef PARSE_GTEST
     std::ofstream logFile;
-#endif // GTEST
+#endif // PARSE_GTEST
 
 
 public:

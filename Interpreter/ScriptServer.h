@@ -40,7 +40,7 @@ public:
     void msgToUserInputKey(UserID& ID_, std::string msg);
     ScriptServer::INTERPRET_STA srvInterpret(UserID& ID_);
     void getOutputMsg(UserID& ID_, std::string& outputMsg);
-
+    void setFinished(UserID& ID_);
 private:
     Interpreter interpreter;
     UserTable users;

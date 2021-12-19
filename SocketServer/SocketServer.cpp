@@ -1,13 +1,14 @@
 #include "SocketServer.h"
 
 SocketServer::SocketServer(int connectNumMax_ = 10)
-    : connectNumMax(connectNumMax_), scriptSrv(RSL_PATH)
+    : connectNumMax(connectNumMax_), scriptSrv("./test-complete-1.rsl")
 {
     initSocketServer();
 
     bufferMutex = CreateSemaphore(NULL, 1, 1, NULL);
+    allKill = CreateSemaphore(NULL, 0, 1, NULL);
     sendSync = CreateSemaphore(NULL, 1, 1, NULL);
-    sendManagerThread = CreateThread(NULL, 0, ManageSendThread, this, 0, NULL);
+    //sendManagerThread = CreateThread(NULL, 0, ManageSendThread, this, 0, NULL);
 }
 
 SocketServer::~SocketServer()
@@ -26,7 +27,7 @@ SocketServer::~SocketServer()
     // 释放所有句柄
     CloseHandle(bufferMutex);
     CloseHandle(sendSync);
-    CloseHandle(sendManagerThread);
+    //CloseHandle(sendManagerThread);
 
 }
 
@@ -182,50 +183,66 @@ int SocketServer::writen(SOCKET dstSocket, const char* msg, int size)
 
 DWORD WINAPI SocketServer::ManageSendThread(LPVOID IpParameter)
 {
-    // 传入了类的 this 指针
-    SocketServer* p = (SocketServer*)IpParameter;
+    //// 传入了类的 this 指针
+    //SocketServer* p = (SocketServer*)IpParameter;
+    //IdSockMap::iterator iter = p->cliSockMap.begin();
 
-    while (1)
-    {
-        // 上一条消息输入、发送完毕后才处理下一个发送任务
-        WaitForSingleObject(p->sendSync, INFINITE);
+    //while (1)
+    //{
+    //    // 上一条消息输入、发送完毕后才处理下一个发送任务
+    //    //WaitForSingleObject(p->sendSync, INFINITE);
 
-        std::cout << "请输入目的客户端 ID: ";
-        std::string dstID;
-        std::getline(std::cin, dstID);
+    //    // 还没有客户端接入，循环等待客户端接入
+    //    if (p->cliSockMap.begin() == p->cliSockMap.end())
+    //    {
+    //        //ReleaseSemaphore(p->sendSync, 1, NULL);
+    //        continue;
+    //    }
 
-        // wait (bufferMutex)
-        WaitForSingleObject(p->bufferMutex, INFINITE);
+    //    // cliSockMap 不为空，但是循环到了末尾，则从头开始
+    //    else if (iter == p->cliSockMap.end())
+    //        iter = p->cliSockMap.begin();
 
-        if (p->cliSockMap.find(dstID) == p->cliSockMap.end())
-        {
-            // 目的 ID 不存在，错误处理并释放资源
-            p->error(SocketServer::ERR_STA::cli_ID_not_exist_ERROR);
-            ReleaseSemaphore(p->bufferMutex, 1, NULL);
-            ReleaseSemaphore(p->sendSync, 1, NULL);
-            continue;
-        }
+    //    //std::cout << "请输入目的客户端 ID: ";
+    //    //std::string dstID;
+    //    //std::getline(std::cin, dstID);
 
-        // 根据目的客户端的 ID 得到目的客户端的 socket
-        SOCKET dstSock = p->cliSockMap[dstID];
-        std::cout << "dstSock: " << dstSock << std::endl;
 
-        if (p->cliSockSyncMap.find(dstSock) != p->cliSockSyncMap.end())
-        {
-            // 如果客户端 socket 的同步信号量已经创建
-            // 将信号量置有效，将针对目的客户端发送消息的线程置为非阻塞状态
-            ReleaseSemaphore(p->bufferMutex, 1, NULL);
-            // signal (bufferMutex)
-            ReleaseSemaphore(p->cliSockSyncMap[dstSock], 1, NULL);
-        }
-        else
-        {
-            // 如果客户端 socket 的同步信号量还没有创建，进入错误处理模块，跳过本次发送
-            p->error(SocketServer::ERR_STA::no_socket_ERROR);
-            ReleaseSemaphore(p->sendSync, 1, NULL);
-            ReleaseSemaphore(p->bufferMutex, 1, NULL);
-        }
-    }
+    //    // wait (bufferMutex)
+    //    WaitForSingleObject(p->bufferMutex, INFINITE);
+
+    //    //if (p->cliSockMap.find(dstID) == p->cliSockMap.end())
+    //    //{
+    //    //    // 目的 ID 不存在，错误处理并释放资源
+    //    //    p->error(SocketServer::ERR_STA::cli_ID_not_exist_ERROR);
+    //    //    ReleaseSemaphore(p->bufferMutex, 1, NULL);
+    //    //    ReleaseSemaphore(p->sendSync, 1, NULL);
+    //    //    continue;
+    //    //}
+
+    //    // 根据目的客户端的 ID 得到目的客户端的 socket
+    //    //SOCKET dstSock = p->cliSockMap[dstID];
+    //    //std::cout << "dstSock: " << iter->second << std::endl;
+
+    //    if (p->cliSockSyncMap.find(iter->second) != p->cliSockSyncMap.end())
+    //    {
+    //        // 如果客户端 socket 的同步信号量已经创建
+    //        // 将信号量置有效，将针对目的客户端发送消息的线程置为非阻塞状态
+    //        ReleaseSemaphore(p->bufferMutex, 1, NULL);
+    //        // signal (bufferMutex)
+    //        ReleaseSemaphore(p->cliSockSyncMap[iter->second], 1, NULL);
+    //    }
+    //    else
+    //    {
+    //        // 如果客户端 socket 的同步信号量还没有创建，进入错误处理模块，跳过本次发送
+    //        p->error(SocketServer::ERR_STA::no_socket_ERROR);
+    //        ReleaseSemaphore(p->sendSync, 1, NULL);
+    //        ReleaseSemaphore(p->bufferMutex, 1, NULL);
+    //    }
+
+    //    iter++;
+    //}
+    return 0;
 }
 
 
@@ -241,10 +258,10 @@ DWORD WINAPI SocketServer::CliSendMessageThread(LPVOID IpParameter)
             break;
 
         // 所有专用的发送消息线程默认都处于阻塞状态，由 manageSend 线程来控制其变为非阻塞状态
-        if (para->p->cliSockSyncMap.find(para->sock) != para->p->cliSockSyncMap.end())
-            WaitForSingleObject(para->p->cliSockSyncMap[para->sock], INFINITE);
-        else
-            continue;
+        //if (para->p->cliSockSyncMap.find(para->sock) != para->p->cliSockSyncMap.end())
+        //    WaitForSingleObject(para->p->cliSockSyncMap[para->sock], INFINITE);
+        //else
+        //    continue;
 
         std::string msg;
         int ret;
@@ -262,6 +279,8 @@ DWORD WINAPI SocketServer::CliSendMessageThread(LPVOID IpParameter)
             WaitForSingleObject(para->p->listenSync[para->sock], INFINITE);
             // 监听到消息后，关闭监听状态
             para->p->listenValid[para->sock] = false;
+            // 设置步骤的完成状态
+            para->p->scriptSrv.setFinished(para->id);
             break;
         case ScriptServer::INTERPRET_STA::Exit:
             para->p->killThrd[para->sock] = true;
@@ -280,13 +299,16 @@ DWORD WINAPI SocketServer::CliSendMessageThread(LPVOID IpParameter)
 
             // signal (bufferMutex)
             ReleaseSemaphore(para->p->bufferMutex, 1, NULL);
+
+            // 设置步骤的完成状态
+            para->p->scriptSrv.setFinished(para->id);
             break;
         default:
             break;
         }
 
         // 当前任务完成，允许 manageSend 线程调度下一次任务
-        ReleaseSemaphore(para->p->sendSync, 1, NULL);
+        //ReleaseSemaphore(para->p->sendSync, 1, NULL);
     }
     return 0;
 }
@@ -397,7 +419,7 @@ void SocketServer::Accept()
         }
         else
         {
-            ReleaseSemaphore(bufferMutex, 1, NULL);
+            /*ReleaseSemaphore(bufferMutex, 1, NULL);*/
             // 创建客户端 ID 和其 socket 之间的一一映射
             cliSockMap.insert(IdSockPair(cliID, sockConn));
         }
@@ -430,7 +452,7 @@ void SocketServer::Accept()
         HANDLE specSendThread = CreateThread(NULL, 0, CliSendMessageThread, (LPVOID)para, 0, NULL);
 
         // wait (bufferMutex)
-        WaitForSingleObject(bufferMutex, INFINITE);
+        //WaitForSingleObject(bufferMutex, INFINITE);
         if (NULL == receiveThread || NULL == specSendThread)
         {
             // 线程创建失败，错误处理并关闭连接
@@ -461,5 +483,5 @@ void SocketServer::Accept()
 void SocketServer::waitThread()
 {
     // 等待线程结束
-    WaitForSingleObject(sendManagerThread, INFINITE);
+    WaitForSingleObject(allKill, INFINITE);
 }

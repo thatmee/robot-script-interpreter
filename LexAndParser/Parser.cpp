@@ -5,7 +5,7 @@ Parser::~Parser() {}
 Parser::Parser(const char* scriptPath_)
     :scriptPath(scriptPath_), parseTree(), lineCnt(1)
 {
-#ifdef GTEST
+#ifdef PARSE_GTEST
     // 从脚本文件路径获取当前脚本文件的名称
     std::string pathStr(scriptPath);
     std::string scriptName;
@@ -27,19 +27,22 @@ Parser::Parser(const char* scriptPath_)
     logFile.open(logName);
     if (!logFile.is_open())
         std::cout << "fail to open error log." << std::endl;
-#endif // GTEST
+#endif // PARSE_GTEST
+
+
+
 }
 
 
 void Parser::error(ERR_STATE err)
 {
-#ifdef GTEST
+#ifdef PARSE_GTEST
     logFile << "line " << lineCnt << "\terror:" << magic_enum::enum_name(err) << std::endl;
 
 #else
     // 处理错误
     std::cout << "error:" << magic_enum::enum_name(err) << std::endl;
-#endif // GTEST
+#endif // PARSE_GTEST
 }
 
 
@@ -310,7 +313,8 @@ void Parser::procOut()
                     }
                     // 出现 + 号，后面还有内容，则等待出现 token
                     state = Parser::EXPR_STATE::WaitToken;
-                    expr.push_back(item);
+                    // + 号不添加到语法树
+                    //expr.push_back(item);
                 }
                 else
                 {
@@ -320,14 +324,15 @@ void Parser::procOut()
                 }
                 break;
             case Parser::EXPR_STATE::WaitToken:
-                // 出现的 token 是变量或者字符串
-                if (item.at(0) == '$' || item.at(0) == '"')
+                if (item.at(0) == '$')
                 {
-                    // 出现的 token 是变量，且不在表中，加入变量表
-                    if (item.at(0) == '$'
-                        && (std::find(parseTree.vars.begin(), parseTree.vars.end(), item) == parseTree.vars.end()))
+                    // 出现的 token 是变量
+                    if (std::find(parseTree.vars.begin(), parseTree.vars.end(), item) == parseTree.vars.end())
+                    {
+                        // token 不在变量表中，加入变量表
                         parseTree.vars.push_back(item);
-                    // 变量或字符串都加入表达式
+                    }
+                    // 变量加入表达式
                     expr.push_back(item);
                     // token 之后没有其他内容了，表达式正确，退出循环
                     if (tokenStream.empty())
@@ -335,9 +340,42 @@ void Parser::procOut()
                     // token 之后还有其他内容，期待出现 + 号
                     state = Parser::EXPR_STATE::WaitAdd;
                 }
-                // 出现了未知的项目，进入错误处理模块
+                else if (item.at(0) == '"')
+                {
+                    // 出现的 token 是字符串
+                    // 字符串去除双引号
+                    item.erase(0, 1);
+                    item.pop_back();
+                    // 字符串去除转义字符
+                    std::match_results;
+                    Item tmp = "";
+                    std::regex pattern(R"(\\(.))");
+                    auto words_begin = std::sregex_iterator(item.begin(), item.end(), pattern);
+                    auto words_end = std::sregex_iterator();
+                    std::sregex_iterator i;
+                    // pos 用于保存最后一个匹配到的 match 的位置，用于添加最后一个 match 的后缀
+                    int pos = -2;
+                    for (i = words_begin; i != words_end; i++)
+                    {
+                        std::smatch match = *i;
+                        std::string match_str = match.str();
+                        tmp += match.prefix();
+                        tmp += match_str[1];
+                        pos = match.position();
+                    }
+                    tmp += item.substr(pos + 2);
+                    expr.push_back(tmp);
+                    // token 之后没有其他内容了，表达式正确，退出循环
+                    if (tokenStream.empty())
+                        break;
+                    // token 之后还有其他内容，期待出现 + 号
+                    state = Parser::EXPR_STATE::WaitAdd;
+
+                }
+
                 else
                 {
+                    // 出现了未知的项目，进入错误处理模块
                     error(ERR_STATE::WrongExprssion);
                     return;
                 }
@@ -431,6 +469,10 @@ void Parser::procBranch()
         error(ERR_STATE::LexicalError);
         return;
     }
+
+    // 参数 1 去除双引号
+    answer.erase(0, 1);
+    answer.pop_back();
 
     // 加入语法树
     parseTree.stepTable[curStepID].push_back(std::make_unique<Branch>(answer, nextStepID));

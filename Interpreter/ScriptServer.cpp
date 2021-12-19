@@ -37,6 +37,7 @@ ScriptServer::NEW_USER_STA ScriptServer::createUser(UserID ID_) {
         std::cout << "ÇëÊäÈë " << iter->first << " : ";
         std::string answer;
         std::getline(std::cin, answer);
+        iter->second = answer;
     }
     return ScriptServer::NEW_USER_STA::Succeed;
 }
@@ -101,6 +102,11 @@ void ScriptServer::msgToUserInputKey(UserID& ID_, std::string msg)
 void ScriptServer::getOutputMsg(UserID& ID_, std::string& outputMsg)
 {
     outputMsg = users[ID_]->outputMsg;
+}
+
+void ScriptServer::setFinished(UserID& ID_)
+{
+    users[ID_]->finished = true;
 }
 
 

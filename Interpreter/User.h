@@ -18,7 +18,7 @@ public:
     VarTable vars;
     std::string inputKey = "";
 
-    bool finished = false;
+    bool finished = true;
     std::string outputMsg = "";
     int listenTime = -1;
 
