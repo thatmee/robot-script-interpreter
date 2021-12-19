@@ -9,6 +9,7 @@
 #include "ParseTree.h"
 #include "LexicalAnalyzer.h"
 #include "Action.hpp"
+#include "DBG/DBG.h"
 #define PARSE_GTEST
 
 using Line = std::string;
@@ -19,6 +20,7 @@ const int LINE_BUFFER_SIZE = 300;
 const std::string BLANKS = "\f\v\r\t ";
 const char ANNOTATION_SYMBOL = '#';
 const Token STREAM_EMPTY = "00";
+static std::ofstream logFile;
 
 /// @brief 语法分析类
 class Parser
@@ -44,9 +46,14 @@ private:
         WaitToken
     };
 
+    /// @brief 记录脚本语法分析是否成功
+    bool everythingRight = true;
 
     /// @brief 当前扫描的脚本行号
     int lineCnt;
+
+    /// @brief 调试、测试、运行信息输出
+    DBG dbg;
 
     /// @brief 保存一行脚本的 token 序列
     TokenStream tokenStream;
@@ -100,18 +107,23 @@ private:
     /// @brief 处理 Exit 语句
     void procExit();
 
+    /// @brief 整体检查语法树：未定义的步骤名等问题
+    void checkTree();
+
     /// @brief 错误处理模块
     /// @param err 发生的错误类型
     void error(ERR_STATE err);
+
+    /// @brief 错误处理模块
+    /// @param err 发生的错误类型
+    /// @param msg 自定义错误消息
+    void error(ERR_STATE err, std::string msg);
 
 
 protected:
     /// @brief 要分析的脚本文件路径，一个 Parser 类对应一个脚本
     const char* scriptPath;
 
-#ifdef PARSE_GTEST
-    std::ofstream logFile;
-#endif // PARSE_GTEST
 
 
 public:
@@ -123,5 +135,5 @@ public:
     ~Parser();
 
     /// @brief 根据脚本文件生成语法树
-    void generateParseTree();
+    bool generateParseTree();
 };

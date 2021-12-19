@@ -60,6 +60,9 @@
     <None Include="test_scripts\unit-test-1.rsl" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\DBG\DBG.vcxproj">
+      <Project>{28a53bf3-5404-4fec-99e9-22319ad4056b}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\LexAndParser\LexAndParser.vcxproj">
       <Project>{0328a3af-bb9e-4b06-96ba-b090b755be41}</Project>
     </ProjectReference>

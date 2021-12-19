@@ -1,6 +1,5 @@
 #pragma once
 #include "LexAndParser/Parser.h"
-#include "unit_test_for_interpreter_and_scriptSrv/pch.h"
 
 class User;
 
@@ -20,9 +19,11 @@ public:
         Out,
     };
 
+    //std::ofstream& logFile = parser.logFile;
+
     Interpreter(const char* scriptName_);
     ~Interpreter();
-    void initParseTree();
+    bool initParseTree();
 
     Interpreter::STA interpret(User& user);
 

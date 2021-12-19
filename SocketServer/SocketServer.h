@@ -120,14 +120,12 @@ private:
 
     /*********************** script interpreter ******************************/
 
+    DBG dbg;
     ScriptServer scriptSrv;
-
     SockHandleMap listenSync;
     SockFlagMap listenValid;
 
 public:
-    const char* RSL_PATH = "./test-complete-1.rsl";
-
     SocketServer(int connectNumMax_);
 
     ~SocketServer();

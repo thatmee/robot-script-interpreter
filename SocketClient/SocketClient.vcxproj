@@ -152,6 +152,11 @@
     <ClCompile Include="ClientMain.cpp" />
     <ClCompile Include="SocketClient.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DBG\DBG.vcxproj">
+      <Project>{28a53bf3-5404-4fec-99e9-22319ad4056b}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

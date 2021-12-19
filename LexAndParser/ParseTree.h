@@ -13,6 +13,7 @@ using StepID = std::string;
 using VarName = std::string;
 using KeyWord = std::string;
 using StepActVec = std::vector<std::unique_ptr<Action>>;
+using StepTable = std::unordered_map<StepID, StepActVec>;
 using Item = std::string;
 using Expression = std::list<Item>;
 
@@ -23,8 +24,8 @@ public:
     std::vector<StepID> exits;
     std::list<KeyWord> keyWords;
     std::list<VarName> vars;
-    std::unordered_map<StepID, StepActVec> stepTable;
+    StepTable stepTable;
     ParseTree() {}
     ~ParseTree();
-    void output();
+    //void output();
 };

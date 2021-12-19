@@ -1,8 +1,19 @@
 #include "SocketServer.h"
 
+const char* RSL_PATH = "./test-complete-1.rsl";
+
 SocketServer::SocketServer(int connectNumMax_ = 10)
-    : connectNumMax(connectNumMax_), scriptSrv("./test-complete-1.rsl")
+    : connectNumMax(connectNumMax_), scriptSrv(RSL_PATH)
 {
+    if (scriptSrv.init())
+        dbg.out("script server ready!\n", logFile);
+    //std::cout << "script server ready!" << std::endl;
+    else
+    {
+        //std::cout << "script server init failed. please check the rsl." << std::endl;
+        dbg.out("script server init failed. please check the rsl.\n", logFile);
+        exit(0);
+    }
     initSocketServer();
 
     bufferMutex = CreateSemaphore(NULL, 1, 1, NULL);
@@ -31,17 +42,21 @@ SocketServer::~SocketServer()
 
 }
 
+
 void SocketServer::error(SocketServer::ERR_STA err)
 {
+    dbg.out("error: " + std::string(magic_enum::enum_name(err)) + "\n", logFile);
 
-    std::cout << "error: " << magic_enum::enum_name(err) << std::endl;
+    //std::cout << "error: " << magic_enum::enum_name(err) << std::endl;
 }
+
 
 void SocketServer::initSocketServer()
 {
     int iRet = 0;
 
-    std::cout << "====================== Server ==========================" << std::endl;
+    //std::cout << "====================== Server ==========================" << std::endl;
+    dbg.out("====================== Server ==========================\n", logFile);
 
     // 加载 2.2 版本的套接字库
     iRet = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -56,7 +71,9 @@ void SocketServer::initSocketServer()
         error(SocketServer::ERR_STA::WSADATA_versionWrong);
         return;
     }
-    std::cout << "done! load the socket data." << std::endl;
+    dbg.out("done! load the socket data.\n", logFile);
+    //std::cout << "" << std::endl;
+
 
     // 创建流式套接字
     srvSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -65,13 +82,15 @@ void SocketServer::initSocketServer()
         error(SocketServer::ERR_STA::socket_INVALID_SOCKET);
         return;
     }
-    std::cout << "done! create srvSocket." << std::endl;
+    dbg.out("done! create srvSocket.\n", logFile);
+    //std::cout << "" << std::endl;
 
     // 初始化服务器地址族变量
     srvAddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
     srvAddr.sin_family = AF_INET;
     srvAddr.sin_port = htons(6000);
-    std::cout << "done! init server address." << std::endl;
+    dbg.out("done! init server address.\n", logFile);
+    //std::cout << "" << std::endl;
 
     // 绑定
     iRet = bind(srvSocket, (SOCKADDR*)&srvAddr, sizeof(SOCKADDR));
@@ -80,7 +99,8 @@ void SocketServer::initSocketServer()
         error(SocketServer::ERR_STA::bind_SOCKET_ERROR);
         return;
     }
-    std::cout << "done! bind." << std::endl;
+    dbg.out("done! bind.\n", logFile);
+    //std::cout << "" << std::endl;
 
     //监听
     iRet = listen(srvSocket, connectNumMax);
@@ -89,9 +109,12 @@ void SocketServer::initSocketServer()
         error(SocketServer::ERR_STA::listen_SOCKET_ERROR);
         return;
     }
-    std::cout << "done! listen." << std::endl;
-    std::cout << "Server ready!" << std::endl;
-    std::cout << std::endl << "===================== by nanyf ==========================" << std::endl << std::endl;
+    dbg.out("done! listen.\n", logFile);
+    //std::cout << "" << std::endl;
+    dbg.out("Server ready!\n", logFile);
+    //std::cout << "" << std::endl;
+    dbg.out("\n===================== by nanyf ==========================\n\n", logFile);
+    //std::cout << std::endl << "" << std::endl << std::endl;
 }
 
 
@@ -293,11 +316,13 @@ DWORD WINAPI SocketServer::CliSendMessageThread(LPVOID IpParameter)
             // 向指定的客户端发送消息
             ret = para->p->Send(para->sock, msg);
             if (ret < 0)
-                std::cout << "send error;" << std::endl;
+                para->p->dbg.out("send error;\n", logFile);
+            //std::cout << "" << std::endl;
             else
-                std::cout << "I say: " << msg << std::endl;
+                para->p->dbg.out("I say: " + msg + "\n", logFile);
+            //std::cout << "" << msg << std::endl;
 
-            // signal (bufferMutex)
+        // signal (bufferMutex)
             ReleaseSemaphore(para->p->bufferMutex, 1, NULL);
 
             // 设置步骤的完成状态
@@ -350,7 +375,9 @@ DWORD WINAPI SocketServer::ReceiveMessageThread(LPVOID IpParameter)
 
             // 关闭客户端 socket
             closesocket(para->sock);
-            std::cout << std::endl << "Attention: A Client has leave..." << std::endl;
+            para->p->dbg.out("Attention: A Client has leave...\n", logFile);
+            //std::cout << std::endl << "" << std::endl;
+
 
             // signal (bufferMutex)
             ReleaseSemaphore(para->p->bufferMutex, 1, NULL);
@@ -368,7 +395,8 @@ DWORD WINAPI SocketServer::ReceiveMessageThread(LPVOID IpParameter)
             para->p->scriptSrv.msgToUserInputKey(para->id, recvMsg);
             ReleaseSemaphore(para->p->listenSync[para->sock], 1, NULL);
         }
-        std::cout << "socket " << para->sock << " says: " << recvMsg << std::endl;
+        para->p->dbg.out("socket " + std::to_string(para->sock) + " says: " + recvMsg + "\n", logFile);
+        //std::cout <<  << para->sock << " says: " << recvMsg << std::endl;
 
         // signal (bufferMutex)
         ReleaseSemaphore(para->p->bufferMutex, 1, NULL);
@@ -468,7 +496,8 @@ void SocketServer::Accept()
         else
         {
             // 线程创建成功
-            std::cout << std::endl << "Create Receive Client Thread OK." << std::endl;
+            dbg.out("Create Receive Client Thread OK.\n", logFile);
+            //std::cout << std::endl << "" << std::endl;
         }
 
         // signal (bufferMutex)

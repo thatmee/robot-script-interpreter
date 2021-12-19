@@ -18,3 +18,11 @@ Step branchTest
     Branch "’Àµ•" billProc
     Silence silenceProc
     Default defaultProc
+Step complainProc
+    Out "this is Complain Proc"
+Step billProc
+    Out "this is billProc"
+Step silenceProc
+    Out "this is silenceProc"
+Step defaultProc
+    Out "this is defaultProc"

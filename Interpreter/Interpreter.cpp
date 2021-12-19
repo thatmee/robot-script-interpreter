@@ -2,17 +2,14 @@
 #include "LexAndParser/Action.hpp"
 #include "User.h"
 
-Interpreter::Interpreter(const char* scriptName_) : parser(scriptName_)
-{
-    std::cout << "init interpreter..." << std::endl;
+Interpreter::Interpreter(const char* scriptName_) : parser(scriptName_) {
 }
 
 Interpreter::~Interpreter() {}
 
-void Interpreter::initParseTree()
+bool Interpreter::initParseTree()
 {
-    std::cout << "init parser tree..." << std::endl;
-    parser.generateParseTree();
+    return parser.generateParseTree();
 }
 
 void Interpreter::initExecEnv(User& user)
@@ -31,9 +28,7 @@ Interpreter::STA Interpreter::interpret(User& user)
 {
     // 上一个动作没有完成，继续完成
     if (!user.finished)
-    {
         return Interpreter::STA::Do;
-    }
 
     // 上一个动作已完成，将动作指针 +1，完成标志置为未完成
     user.actIndex++;
