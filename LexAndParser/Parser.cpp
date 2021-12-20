@@ -1,10 +1,7 @@
 #include "Parser.h"
 
-Parser::~Parser()
-{
-    //if (logFile.is_open())
-    //    logFile.close();
-}
+Parser::~Parser() {}
+
 
 Parser::Parser(const char* scriptPath_)
     :scriptPath(scriptPath_), parseTree(), lineCnt(1) {}
@@ -13,14 +10,14 @@ Parser::Parser(const char* scriptPath_)
 void Parser::error(ERR_STATE err)
 {
     everythingRight = false;
-    //logFile << "line " << lineCnt << "\terror:" << magic_enum::enum_name(err) << std::endl;
-    dbg.out("line " + std::to_string(lineCnt) + "\terror" + std::string(magic_enum::enum_name(err)) + "\n", logFile);
+    dbg.out("line " + std::to_string(lineCnt) + "\terror" + std::string(magic_enum::enum_name(err)) + "\n", logName);
 }
+
 
 void Parser::error(ERR_STATE err, std::string msg)
 {
     everythingRight = false;
-    dbg.out("error: " + std::string(magic_enum::enum_name(err)) + "\t" + msg + "\n", logFile);
+    dbg.out("error: " + std::string(magic_enum::enum_name(err)) + "\t" + msg + "\n", logName);
 }
 
 
@@ -96,8 +93,7 @@ void Parser::parseFile()
     // 文件打开失败
     if (!inFile.is_open())
     {
-        //std::cout << "fail to open script." << std::endl;
-        dbg.out("fail to open script.\n", logFile);
+        dbg.out("fail to open script.\n", logName);
         everythingRight = false;
         return;
     }
@@ -127,7 +123,6 @@ void Parser::parseLine(Line line)
     tokenStream.clear();
     splitString(line, tokenStream, BLANKS);
 
-    //TODO 需要仔细想想！！有没有什么好的方法？
     // 字符串中如果含有空白字符，也会被分割开，需要进行合并处理
     if (tokenStream[0] == "Out" || tokenStream[0] == "Branch")
     {
@@ -188,7 +183,6 @@ void Parser::parseLine(Line line)
     procTokens();
 }
 
-//todo  可以使用设计模式进行改进
 
 void Parser::procTokens()
 {
@@ -566,57 +560,44 @@ void Parser::procExit()
 
 bool Parser::generateParseTree()
 {
-#ifdef PARSE_GTEST
-    // 从脚本文件路径获取当前脚本文件的名称
-    std::string pathStr(scriptPath);
-    std::string scriptName;
-    std::string::size_type sep = pathStr.find_last_of("/");
-    std::string::size_type suf = pathStr.find_last_of(".");
-    if (sep == std::string::npos)
-        sep = 0;
-    if (suf == std::string::npos)
-        scriptName = pathStr.substr(sep);
-    else if (sep < suf)
-        scriptName = pathStr.substr(sep + 1, suf - sep - 1);
-    else
-        scriptName = "error";
+#ifdef GTEST
 
-    // 测试日志文件名称为：脚本文件名称.log
-    std::string logName = "./log/" + scriptName + ".log";
-    dbg.setDbgLevel(DBG::DBG_LEVELS::Detail);
+    dbg.setDbgLevel(DBG::DBG_LEVELS::Test);
     dbg.setOutPipe(DBG::PIPES::FileIO);
-
-    // 打开测试日志文件
-    logFile.open(logName);
-    if (!logFile.is_open())
-        dbg.out("fail to open error log.\n");
-    //std::cout << "fail to open error log." << std::endl;
+    dbg.anaLogName(scriptPath, logName);
+    // 删除原有文件
+    std::ofstream log(logName);
+    if (log.is_open())
+    {
+        log << "";
+        log.close();
+    }
 
 #else
     dbg.setDbgLevel(DBG::DBG_LEVELS::Simple);
     dbg.setOutPipe(DBG::PIPES::Standard);
-#endif // PARSE_GTEST
+#endif // GTEST
 
-    //std::cout << "generateParseTree..." << std::endl;
-    dbg.out("generateParseTree...\n", logFile);
+    dbg.out("generateParseTree...\n", logName);
 
     parseFile();
 
-    if (everythingRight)
-        dbg.out("parse file finished.\n", logFile);
-    //std::cout << "parse file finished." << std::endl;
-    else
-        dbg.out("parse file failed.\n", logFile);
-    //std::cout << "parse file failed." << std::endl;
+    // 测试时输出语法树
+    parseTree.output(logName);
 
-    //if (logFile.is_open())
-    //    logFile.close();
+    if (everythingRight)
+        dbg.out("parse file finished.\n", logName);
+    else
+        dbg.out("parse file failed.\n", logName);
+
+    // 返回分析结果
     return everythingRight;
 }
 
 
 void Parser::checkTree()
 {
+    // 遍历语法树
     for (StepTable::iterator tIter = parseTree.stepTable.begin(); tIter != parseTree.stepTable.end(); tIter++)
     {
         for (StepActVec::iterator vIter = tIter->second.begin(); vIter != tIter->second.end(); vIter++)
@@ -624,7 +605,7 @@ void Parser::checkTree()
             Action::ActionType type = (*vIter)->getCurType();
             StepID nextStepID;
 
-            // 如果是 Branch、Silence、Default 中的一种，获取其 nextStepID
+            // 如果动作是 Branch、Silence、Default 中的一种，获取其 nextStepID
             if (type == Action::ActionType::Branch)
             {
                 Branch* branch = static_cast<Branch*>(vIter->get());
@@ -648,6 +629,6 @@ void Parser::checkTree()
             if (parseTree.stepTable.find(nextStepID) == parseTree.stepTable.end())
                 error(Parser::ERR_STATE::UnknownToken, "An undefined stepID: " + nextStepID);
         }
-    }
+}
 }
 

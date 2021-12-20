@@ -5,6 +5,8 @@
 #include "LexAndParser/LexicalAnalyzer.h"
 #include "LexAndParser/Parser.h"
 
+
+
 TEST(checkLexical, Identifier) {
     EXPECT_TRUE(LexAna::TYPE::Identifier == LexAna("abc123_").checkLexical());
     EXPECT_TRUE(LexAna::TYPE::Identifier == LexAna("Abjh3901__3jsienBESIds").checkLexical());
@@ -56,11 +58,11 @@ TEST(checkLexical, Empty) {
 }
 
 TEST(parser, correctTest) {
-    Parser p("./test_scripts/unit-test-correct.rsl");
+    Parser p("./scripts/unit-test-correct.rsl");
     p.generateParseTree();
     std::ifstream sampleLog, realLog;
-    sampleLog.open("./test_scripts/sample_log/unit-test-correct.rsl.log");
-    realLog.open("./log/unit-test-correct.rsl.log");
+    sampleLog.open("./log/sample_log/unit-test-correct.log");
+    realLog.open("./log/unit-test-correct.log");
     std::string sampleStr, realStr;
     while (!sampleLog.eof())
         sampleStr += sampleLog.get();
@@ -72,11 +74,11 @@ TEST(parser, correctTest) {
 }
 
 TEST(parser, wrongTest) {
-    Parser p("./test_scripts/unit-test-wrong.rsl");
+    Parser p("./scripts/unit-test-wrong.rsl");
     p.generateParseTree();
     std::ifstream sampleLog, realLog;
-    sampleLog.open("./test_scripts/sample_log/unit-test-wrong.rsl.log");
-    realLog.open("./log/unit-test-wrong.rsl.log");
+    sampleLog.open("./log/sample_log/unit-test-wrong.log");
+    realLog.open("./log/unit-test-wrong.log");
     std::string sampleStr, realStr;
     while (!sampleLog.eof())
         sampleStr += sampleLog.get();

@@ -4,45 +4,31 @@
 
 const int FILE_BUFFER_SIZE = 50;
 
-ScriptServer::ScriptServer(const char* scriptName_) : interpreter(scriptName_), scriptPath(scriptName_) {}
+ScriptServer::ScriptServer(const char* scriptName_) : interpreter(scriptName_), scriptPath(scriptName_)
+{
+    dbg.anaLogName(scriptName_, logName);
+}
+
 
 bool ScriptServer::init()
 {
-#ifdef ITPR_GTEST
-    //// 从脚本文件路径获取当前脚本文件的名称
-    //std::string pathStr(scriptPath);
-    //std::string scriptName;
-    //std::string::size_type sep = pathStr.find_last_of("/");
-    //std::string::size_type suf = pathStr.find_last_of(".");
-    //if (sep == std::string::npos)
-    //    sep = 0;
-    //if (suf == std::string::npos)
-    //    scriptName = pathStr.substr(sep);
-    //else if (sep < suf)
-    //    scriptName = pathStr.substr(sep, suf);
-    //else
-    //    scriptName = "error";
-
-    //// 测试日志文件名称为：脚本文件名称.log
-    //std::string logName = "./log/" + scriptName + ".log";
+#ifdef GTEST
 
     dbg.setDbgLevel(DBG::DBG_LEVELS::Detail);
     dbg.setOutPipe(DBG::PIPES::FileIO);
 
-    //// 打开测试日志文件
-    //logFile.open(logName);
-    //if (!logFile.is_open())
-    //    dbg.out("fail to open error log.\n");
 #else
     dbg.setDbgLevel(DBG::DBG_LEVELS::Simple);
     dbg.setOutPipe(DBG::PIPES::Standard);
 
-#endif // ITPR_GTEST
+#endif // GTEST
 
     return interpreter.initParseTree();
 }
 
+
 ScriptServer::~ScriptServer() {}
+
 
 ScriptServer::NEW_USER_STA ScriptServer::createUser(UserID ID_) {
     // 判断 ID 是否符合规则，不符合则进入错误处理模块
@@ -66,40 +52,24 @@ ScriptServer::NEW_USER_STA ScriptServer::createUser(UserID ID_) {
     // 调用 Interpreter，根据 parser tree 初始化用户数据
     interpreter.initExecEnv(user);
 
-#ifdef ITPR_GTEST
-    // 从脚本文件路径获取当前脚本文件的名称
-    std::string pathStr(scriptPath);
-    std::string scriptName;
-    std::string::size_type sep = pathStr.find_last_of("/");
-    std::string::size_type suf = pathStr.find_last_of(".");
-    if (sep == std::string::npos)
-        sep = 0;
-    if (suf == std::string::npos)
-        scriptName = pathStr.substr(sep);
-    else if (sep < suf)
-        scriptName = pathStr.substr(sep, suf);
-    else
-        scriptName = "error";
+#ifdef GTEST
 
-    // 模拟输入文件名称为：脚本文件名称.in
-    std::string logName = "./input/" + scriptName + ".in";
-
-    // 打开模拟输入文件
-    inFile.open(logName);
+    std::string inFileName;
+    dbg.anaInfileName(scriptPath, inFileName);
+    inFile.open(inFileName);
     if (!inFile.is_open())
+    {
         dbg.out("fail to open input file.");
+        exit(0);
+    }
 
-#endif // ITPR_GTEST
+#endif // GTEST
 
 
-    // 使用命令行，填充用户的变量表
+    // 填充用户的变量表，使用输入模拟服务器数据库
     for (VarTable::iterator iter = user.vars.begin(); iter != user.vars.end(); iter++)
     {
-        //std::cout << "请输入 " << iter->first << " : ";
-        //std::string answer;
-        //std::getline(std::cin, answer);
-
-        dbg.out("请输入 " + iter->first + " : ", logFile);
+        dbg.out("请输入 " + iter->first + " : ", logName);
         std::string answer;
         dbg.getline(inFile, FILE_BUFFER_SIZE, answer);
 
@@ -107,6 +77,7 @@ ScriptServer::NEW_USER_STA ScriptServer::createUser(UserID ID_) {
     }
     return ScriptServer::NEW_USER_STA::Succeed;
 }
+
 
 ScriptServer::DEL_USER_STA ScriptServer::deleteUser(UserID& ID_)
 {
@@ -139,6 +110,7 @@ ScriptServer::INTERPRET_STA ScriptServer::srvInterpret(UserID& ID_)
 
 bool ScriptServer::isValidFormat(UserID& id)
 {
+    // 规定 id 为 3 位，且第一位不为 0 的数字
     if (id.length() != 3 || id[0] == '0')
         return false;
     try
@@ -155,8 +127,7 @@ bool ScriptServer::isValidFormat(UserID& id)
 
 void ScriptServer::error(ScriptServer::NEW_USER_STA err)
 {
-    dbg.out("error: " + std::string(magic_enum::enum_name(err)) + "\n", logFile);
-    //std::cout << "error: " << magic_enum::enum_name(err) << std::endl;
+    dbg.out("error: " + std::string(magic_enum::enum_name(err)) + "\n", logName);
 }
 
 
@@ -166,10 +137,12 @@ void ScriptServer::msgToUserInputKey(UserID& ID_, std::string msg)
     users[ID_]->inputKey = msg;
 }
 
+
 void ScriptServer::getOutputMsg(UserID& ID_, std::string& outputMsg)
 {
     outputMsg = users[ID_]->outputMsg;
 }
+
 
 void ScriptServer::setFinished(UserID& ID_)
 {

@@ -5,7 +5,10 @@
 #include <string>
 #include <memory>
 #include <iostream>
+#include <fstream>
 #include <regex>
+#include <lib\magic_enum.hpp>
+#include "DBG/DBG.h"
 
 class Action;
 
@@ -27,5 +30,5 @@ public:
     StepTable stepTable;
     ParseTree() {}
     ~ParseTree();
-    //void output();
+    void output(std::string logName);
 };

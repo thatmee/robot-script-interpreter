@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <fstream>
 #include <cstdio>
 #include <string>
 #include <cstring>
@@ -8,6 +9,8 @@
 #include <Windows.h>
 #include <WS2tcpip.h>
 #pragma comment(lib,"ws2_32.lib")
+#include "DBG/DBG.h"
+#include "DBG/test.h"
 
 
 
@@ -81,7 +84,6 @@ private:
     /// @brief 当前客户端用于接收消息的线程
     /// @param IpParameter this 指针
     DWORD static WINAPI ReceiveMessageThread(LPVOID IpParameter);
-
 
 public:
 

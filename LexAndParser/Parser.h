@@ -3,14 +3,13 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
-#include <lib\magic_enum.hpp>
 #include <codecvt>
 #include <regex>
 #include "ParseTree.h"
 #include "LexicalAnalyzer.h"
 #include "Action.hpp"
 #include "DBG/DBG.h"
-#define PARSE_GTEST
+
 
 using Line = std::string;
 using Token = std::string;
@@ -20,7 +19,6 @@ const int LINE_BUFFER_SIZE = 300;
 const std::string BLANKS = "\f\v\r\t ";
 const char ANNOTATION_SYMBOL = '#';
 const Token STREAM_EMPTY = "00";
-static std::ofstream logFile;
 
 /// @brief 语法分析类
 class Parser
@@ -129,6 +127,8 @@ protected:
 public:
     /// @brief 语法分析结果所保存的语法树
     ParseTree parseTree;
+
+    std::string logName;
 
     Parser() : scriptPath(nullptr), lineCnt(1) {}
     Parser(const char* scriptPath_);

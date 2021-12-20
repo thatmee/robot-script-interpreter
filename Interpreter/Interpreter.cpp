@@ -2,15 +2,17 @@
 #include "LexAndParser/Action.hpp"
 #include "User.h"
 
-Interpreter::Interpreter(const char* scriptName_) : parser(scriptName_) {
-}
+Interpreter::Interpreter(const char* scriptName_) : parser(scriptName_), scriptPath(scriptName_) {}
+
 
 Interpreter::~Interpreter() {}
+
 
 bool Interpreter::initParseTree()
 {
     return parser.generateParseTree();
 }
+
 
 void Interpreter::initExecEnv(User& user)
 {
@@ -23,6 +25,7 @@ void Interpreter::initExecEnv(User& user)
     // 根据 entry ID 填充用户的起始步骤 ID
     user.curStepID = parser.parseTree.entry;
 }
+
 
 Interpreter::STA Interpreter::interpret(User& user)
 {
@@ -99,6 +102,7 @@ void Interpreter::interpretOut(Out* out, User& user)
 
     user.outputMsg = outStr;
 }
+
 
 void Interpreter::interpretBranch(StepActVec& actions, User& user)
 {

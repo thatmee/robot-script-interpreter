@@ -99,15 +99,8 @@ private:
     /// @brief 提供 sendManager 和 cliSend 线程之间同步的信号量
     HANDLE sendSync;
 
-    /// @brief 用于管理所有发送任务的线程句柄
-    //HANDLE sendManagerThread;
-
     /// @brief 管理整个服务器的关闭
     HANDLE allKill;
-
-    /// @brief 管理所有发送任务的线程
-    /// @param IpParameter this 指针
-    DWORD static WINAPI ManageSendThread(LPVOID IpParameter);
 
     /// @brief 针对单个客户端发送消息的线程
     /// @param IpParameter 结构体 Para { p = this; sock = 客户端对应 socket; }
@@ -120,10 +113,16 @@ private:
 
     /*********************** script interpreter ******************************/
 
-    DBG dbg;
     ScriptServer scriptSrv;
     SockHandleMap listenSync;
     SockFlagMap listenValid;
+
+
+    /************************** dbg out **************************************/
+
+    std::string logName;
+    std::ifstream& inFile = scriptSrv.inFile;
+    DBG dbg;
 
 public:
     SocketServer(int connectNumMax_);
