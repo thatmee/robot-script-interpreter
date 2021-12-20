@@ -1,44 +1,23 @@
 #include "Parser.h"
 
+Parser::~Parser() {}
+
 
 Parser::Parser(const char* scriptPath_)
-    :scriptPath(scriptPath_), parseTree(), lineCnt(1)
-{
-#ifdef GTEST
-    // 从脚本文件路径获取当前脚本文件的名称
-    std::string pathStr(scriptPath);
-    std::string scriptName;
-    std::string::size_type sep = pathStr.find_last_of("/");
-    std::string::size_type suf = pathStr.find_last_of(".");
-    if (sep == std::string::npos)
-        sep = 0;
-    if (suf == std::string::npos)
-        scriptName = pathStr.substr(sep);
-    else if (sep < suf)
-        scriptName = pathStr.substr(sep, suf);
-    else
-        scriptName = "error";
-
-    // 测试日志文件名称为：脚本文件名称.log
-    std::string logName = "./log/" + scriptName + ".log";
-
-    // 打开测试日志文件
-    logFile.open(logName);
-    if (!logFile.is_open())
-        std::cout << "fail to open error log." << std::endl;
-#endif // GTEST
-}
+    :scriptPath(scriptPath_), parseTree(), lineCnt(1) {}
 
 
 void Parser::error(ERR_STATE err)
 {
-#ifdef GTEST
-    logFile << "line " << lineCnt << "\terror:" << magic_enum::enum_name(err) << std::endl;
+    everythingRight = false;
+    dbg.out("line " + std::to_string(lineCnt) + "\terror" + std::string(magic_enum::enum_name(err)) + "\n", logName);
+}
 
-#else
-    // 处理错误
-    std::cout << "error:" << magic_enum::enum_name(err) << std::endl;
-#endif // GTEST
+
+void Parser::error(ERR_STATE err, std::string msg)
+{
+    everythingRight = false;
+    dbg.out("error: " + std::string(magic_enum::enum_name(err)) + "\t" + msg + "\n", logName);
 }
 
 
@@ -110,13 +89,16 @@ void Parser::parseFile()
 {
     std::ifstream inFile;
     inFile.open(scriptPath);
+
     // 文件打开失败
     if (!inFile.is_open())
     {
-        std::cout << "fail to open script." << std::endl;
+        dbg.out("fail to open script.\n", logName);
+        everythingRight = false;
         return;
     }
-    // 文件打开成功，逐行读取脚本文件
+
+    // 文件打开成功，逐行读取脚本文件进行分析
     while (!inFile.eof())
     {
         char lineBuf[LINE_BUFFER_SIZE];
@@ -129,6 +111,9 @@ void Parser::parseFile()
             parseLine(line);
         lineCnt++;
     }
+
+    // 逐行分析完毕，对语法树进行整体检查
+    checkTree();
     inFile.close();
 }
 
@@ -138,7 +123,6 @@ void Parser::parseLine(Line line)
     tokenStream.clear();
     splitString(line, tokenStream, BLANKS);
 
-    //TODO 需要仔细想想！！有没有什么好的方法？
     // 字符串中如果含有空白字符，也会被分割开，需要进行合并处理
     if (tokenStream[0] == "Out" || tokenStream[0] == "Branch")
     {
@@ -199,7 +183,6 @@ void Parser::parseLine(Line line)
     procTokens();
 }
 
-//todo  可以使用设计模式进行改进
 
 void Parser::procTokens()
 {
@@ -309,7 +292,8 @@ void Parser::procOut()
                     }
                     // 出现 + 号，后面还有内容，则等待出现 token
                     state = Parser::EXPR_STATE::WaitToken;
-                    expr.push_back(item);
+                    // + 号不添加到语法树
+                    //expr.push_back(item);
                 }
                 else
                 {
@@ -319,14 +303,15 @@ void Parser::procOut()
                 }
                 break;
             case Parser::EXPR_STATE::WaitToken:
-                // 出现的 token 是变量或者字符串
-                if (item.at(0) == '$' || item.at(0) == '"')
+                if (item.at(0) == '$')
                 {
-                    // 出现的 token 是变量，且不在表中，加入变量表
-                    if (item.at(0) == '$'
-                        && (std::find(parseTree.vars.begin(), parseTree.vars.end(), item) == parseTree.vars.end()))
+                    // 出现的 token 是变量
+                    if (std::find(parseTree.vars.begin(), parseTree.vars.end(), item) == parseTree.vars.end())
+                    {
+                        // token 不在变量表中，加入变量表
                         parseTree.vars.push_back(item);
-                    // 变量或字符串都加入表达式
+                    }
+                    // 变量加入表达式
                     expr.push_back(item);
                     // token 之后没有其他内容了，表达式正确，退出循环
                     if (tokenStream.empty())
@@ -334,9 +319,42 @@ void Parser::procOut()
                     // token 之后还有其他内容，期待出现 + 号
                     state = Parser::EXPR_STATE::WaitAdd;
                 }
-                // 出现了未知的项目，进入错误处理模块
+                else if (item.at(0) == '"')
+                {
+                    // 出现的 token 是字符串
+                    // 字符串去除双引号
+                    item.erase(0, 1);
+                    item.pop_back();
+                    // 字符串去除转义字符
+                    std::match_results;
+                    Item tmp = "";
+                    std::regex pattern(R"(\\(.))");
+                    auto words_begin = std::sregex_iterator(item.begin(), item.end(), pattern);
+                    auto words_end = std::sregex_iterator();
+                    std::sregex_iterator i;
+                    // pos 用于保存最后一个匹配到的 match 的位置，用于添加最后一个 match 的后缀
+                    int pos = -2;
+                    for (i = words_begin; i != words_end; i++)
+                    {
+                        std::smatch match = *i;
+                        std::string match_str = match.str();
+                        tmp += match.prefix();
+                        tmp += match_str[1];
+                        pos = match.position();
+                    }
+                    tmp += item.substr(pos + 2);
+                    expr.push_back(tmp);
+                    // token 之后没有其他内容了，表达式正确，退出循环
+                    if (tokenStream.empty())
+                        break;
+                    // token 之后还有其他内容，期待出现 + 号
+                    state = Parser::EXPR_STATE::WaitAdd;
+
+                }
+
                 else
                 {
+                    // 出现了未知的项目，进入错误处理模块
                     error(ERR_STATE::WrongExprssion);
                     return;
                 }
@@ -350,6 +368,7 @@ void Parser::procOut()
     // 将要输出的表达式保存
     parseTree.stepTable[curStepID].push_back(std::make_unique<Out>(expr));
 }
+
 
 void Parser::procListen()
 {
@@ -392,6 +411,7 @@ void Parser::procListen()
     parseTree.stepTable[curStepID].push_back(std::make_unique<Listen>(listenTime));
 }
 
+
 void Parser::procBranch()
 {
     // 当前动作没有对应的 Step，进入错误处理模块
@@ -430,6 +450,10 @@ void Parser::procBranch()
         error(ERR_STATE::LexicalError);
         return;
     }
+
+    // 参数 1 去除双引号
+    answer.erase(0, 1);
+    answer.pop_back();
 
     // 加入语法树
     parseTree.stepTable[curStepID].push_back(std::make_unique<Branch>(answer, nextStepID));
@@ -475,6 +499,7 @@ void Parser::procSilence()
     parseTree.stepTable[curStepID].push_back(std::make_unique<Silence>(nextStepID));
 }
 
+
 void Parser::procDefault() {
     // 当前动作没有对应的 Step，进入错误处理模块
     if (curStepID == "")
@@ -509,6 +534,7 @@ void Parser::procDefault() {
     parseTree.stepTable[curStepID].push_back(std::make_unique<Default>(nextStepID));
 }
 
+
 void Parser::procExit()
 {
     // 当前动作没有对应的 Step，进入错误处理模块
@@ -532,9 +558,77 @@ void Parser::procExit()
 }
 
 
-void Parser::generateParseTree()
+bool Parser::generateParseTree()
 {
-    std::cout << "generateParseTree" << std::endl;
+#ifdef GTEST
+
+    dbg.setDbgLevel(DBG::DBG_LEVELS::Test);
+    dbg.setOutPipe(DBG::PIPES::FileIO);
+    dbg.anaLogName(scriptPath, logName);
+    // 删除原有文件
+    std::ofstream log(logName);
+    if (log.is_open())
+    {
+        log << "";
+        log.close();
+    }
+
+#else
+    dbg.setDbgLevel(DBG::DBG_LEVELS::Simple);
+    dbg.setOutPipe(DBG::PIPES::Standard);
+#endif // GTEST
+
+    dbg.out("generateParseTree...\n", logName);
+
     parseFile();
-    std::cout << "parse file finished." << std::endl;
+
+    // 测试时输出语法树
+    parseTree.output(logName);
+
+    if (everythingRight)
+        dbg.out("parse file finished.\n", logName);
+    else
+        dbg.out("parse file failed.\n", logName);
+
+    // 返回分析结果
+    return everythingRight;
 }
+
+
+void Parser::checkTree()
+{
+    // 遍历语法树
+    for (StepTable::iterator tIter = parseTree.stepTable.begin(); tIter != parseTree.stepTable.end(); tIter++)
+    {
+        for (StepActVec::iterator vIter = tIter->second.begin(); vIter != tIter->second.end(); vIter++)
+        {
+            Action::ActionType type = (*vIter)->getCurType();
+            StepID nextStepID;
+
+            // 如果动作是 Branch、Silence、Default 中的一种，获取其 nextStepID
+            if (type == Action::ActionType::Branch)
+            {
+                Branch* branch = static_cast<Branch*>(vIter->get());
+                branch->getNextStepID(nextStepID);
+            }
+            else if (type == Action::ActionType::Silence)
+            {
+                Silence* silence = static_cast<Silence*>(vIter->get());
+                silence->getNextStepID(nextStepID);
+            }
+            else if (type == Action::ActionType::Default)
+            {
+                Default* d = static_cast<Default*>(vIter->get());
+                d->getNextStepID(nextStepID);
+            }
+            // 如果是其他类型的动作，直接跳过
+            else
+                continue;
+
+            // 获取到的 StepID 不在 StepTable 中，进入错误处理模块
+            if (parseTree.stepTable.find(nextStepID) == parseTree.stepTable.end())
+                error(Parser::ERR_STATE::UnknownToken, "An undefined stepID: " + nextStepID);
+        }
+}
+}
+

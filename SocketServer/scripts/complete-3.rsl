@@ -1,0 +1,37 @@
+Step hello
+    Out $studentID + " 你好！DDL 小帮手在此，想要查询哪科的 DDL？"
+    Default listenAndAct
+    
+Step listenAndAct
+    Listen 50
+    Branch "程序设计" programming
+    Branch "python" python
+    Branch "计网" net
+    Branch "数据库" db
+    Branch "OS" OS
+    Default defaultProc
+    
+Step defaultProc
+    Out "恭喜你目前不用上这门课，还想看看其他的课程吗？程序设计、python、计网、数据库、OS？"
+    Default listenAndAct
+    
+Step programming
+    Out $program_DDL
+    Default listenAndAct
+    
+Step python
+    Out $python_DDL
+    Default listenAndAct
+
+Step net
+    Out $net_DDL
+    Default listenAndAct
+    
+Step db
+    Out $db_DDL
+    Default listenAndAct
+    
+Step OS
+    Out $OS_DDL
+    Default listenAndAct
+

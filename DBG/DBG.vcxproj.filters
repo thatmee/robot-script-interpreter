@@ -15,24 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="User.h">
+    <ClInclude Include="DBG.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Interpreter.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ScriptServer.h">
+    <ClInclude Include="test.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="User.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ScriptServer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Interpreter.cpp">
+    <ClCompile Include="DBG.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
