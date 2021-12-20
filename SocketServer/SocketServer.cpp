@@ -1,8 +1,8 @@
 #include "SocketServer.h"
 
-const char* RSL_PATH = "./scripts/complete-1.rsl";
+//const char* RSL_PATH = "./scripts/complete-1.rsl";
 //const char* RSL_PATH = "./scripts/complete-2.rsl";
-//const char* RSL_PATH = "./scripts/complete-3.rsl";
+const char* RSL_PATH = "./scripts/complete-3.rsl";
 
 SocketServer::SocketServer(int connectNumMax_ = 10)
     : connectNumMax(connectNumMax_), scriptSrv(RSL_PATH)

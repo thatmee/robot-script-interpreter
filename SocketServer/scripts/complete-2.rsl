@@ -1,0 +1,52 @@
+Step hello
+    Out "欢迎您来到甘肃省博物馆智能向导，您可以查看："
+    Out "简介"
+    Out "官网"
+    Out "展览"
+    Out "文物"
+    Out "学术活动"
+    Out "请输入相应关键字查看。"
+    Default listenAndAct
+    
+Step listenAndAct
+    Listen 50
+    Branch "简介" introProc
+    Branch "官网" httpProc
+    Branch "展览" exhibitions
+    Branch "文物" treasures
+    Branch "学术活动" reserchAndEdu
+    Default defaultProc
+    
+Step defaultProc
+    Out "抱歉~该板块暂不支持查看，您可以查看："
+    Out "简介"
+    Out "官网"
+    Out "展览"
+    Out "文物"
+    Out "学术活动"
+    Out "文创产品"
+    Out "请输入相应关键字查看。"
+    Default listenAndAct
+    
+Step introProc
+    Out "坐落在黄河之滨的甘肃省博物馆，是国内最早成立的综合性博物馆之一。其前身是1939年成立的甘肃科学教育馆，1950年改为西北人民科学馆，1956年改名为甘肃省博物馆，1958年迁入新馆。1999年经省政府立项，投资1.5亿元对原展览大楼进行改扩建工程，馆舍占地108亩，展览大楼建筑总面积2.85万平方米，展厅18个，院内还有文物库房、文物保护实验室等设施，整个展览大楼本着\"庄重、典雅、美观、人性化\"的原则设计和建设，是一座现代化综合性智能建筑，2006年12月26日展览大楼正式对外开放。"
+    Out "再看看别的版块？"
+    Default listenAndAct
+Step httpProc
+    Out "http://www.gansumuseum.com/"
+    Out "再看看别的版块？"
+    Default listenAndAct
+Step exhibitions
+    Out $e1 + " " + $e2 + " " + $e3 + " ..."
+    Out "更多展览请查看官网 http://www.gansumuseum.com/zl/list-55.html"
+    Out "再看看别的版块？"
+    Default listenAndAct
+Step treasures
+    Out $t1 + " " + $t2 + " " + $t3 + " ..."
+    Out "更多珍品请查看官网 http://www.gansumuseum.com/dc/list-58.html"
+    Out "再看看别的版块？"
+    Default listenAndAct
+Step reserchAndEdu
+    Out "参见官网 http://www.gansumuseum.com/xsyj/list-65.html"
+    Out "再看看别的版块？"
+    Default listenAndAct

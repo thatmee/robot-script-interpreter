@@ -15,7 +15,7 @@ using Line = std::string;
 using Token = std::string;
 using TokenStream = std::vector<Token>;
 
-const int LINE_BUFFER_SIZE = 300;
+const int LINE_BUFFER_SIZE = 3000;
 const std::string BLANKS = "\f\v\r\t ";
 const char ANNOTATION_SYMBOL = '#';
 const Token STREAM_EMPTY = "00";
