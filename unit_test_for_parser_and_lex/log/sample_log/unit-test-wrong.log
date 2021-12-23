@@ -1,0 +1,50 @@
+generateParseTree...
+line 1	errorUnknownToken
+line 2	errorTooFewTokens
+line 3	errorLexicalError
+line 4	errorTooManyTokens
+line 6	errorDuplicatedStep
+line 9	errorTooFewTokens
+line 10	errorWrongExprssion
+line 11	errorWrongExprssion
+line 12	errorLexicalError
+line 13	errorWrongExprssion
+line 14	errorWrongExprssion
+line 15	errorWrongExprssion
+line 16	errorLexicalError
+line 18	errorNoCorrespondingStep
+line 21	errorTooFewTokens
+line 22	errorTooManyTokens
+line 23	errorWrongType
+line 26	errorTooFewTokens
+line 27	errorTooManyTokens
+line 28	errorWrongType
+line 29	errorLexicalError
+line 34	errorTooFewTokens
+line 35	errorTooManyTokens
+line 36	errorLexicalError
+line 39	errorTooFewTokens
+line 40	errorTooManyTokens
+line 41	errorLexicalError
+line 44	errorTooManyTokens
+error: UnknownToken	An undefined stepID: testRepeatKey1
+error: UnknownToken	An undefined stepID: testRepeatKey2
+entry: testRepeat
+exits: 
+	testOut
+key words: 
+	repeatKey
+vars: 
+	$name
+	$nothing_after_add
+step table: 
+testRepeat
+testOut
+testDefault
+testListen
+testExit
+testBranch
+	-> Branch	-> 	key: repeatKey	nextStepID: testRepeatKey1
+	-> Branch	-> 	key: repeatKey	nextStepID: testRepeatKey2
+testSilence
+parse file failed.

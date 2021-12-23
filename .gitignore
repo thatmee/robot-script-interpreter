@@ -32,6 +32,8 @@ bld/
 [Oo]ut/
 [Ll]og/
 [Ll]ogs/
+!unit_test_for_interpreter_and_scriptSrv/log/
+!unit_test_for_parser_and_lex/log/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/

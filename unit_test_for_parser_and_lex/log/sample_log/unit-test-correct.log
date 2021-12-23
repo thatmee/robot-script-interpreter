@@ -1,0 +1,37 @@
+generateParseTree...
+entry: outTest
+exits: 
+	listenTest
+key words: 
+	投诉
+	账单
+vars: 
+	$name
+	$var1
+	$var2
+	$var3
+step table: 
+outTest
+	-> Out	-> 	$name您好，请问您需要什么帮助？
+	-> Out	-> 	testinlineblanks
+	-> Out	-> 	test\character
+	-> Out	-> 	test double quotation:at the end"
+	-> Out	-> 	test double " quotation " :middle
+	-> Out	-> 	test double quotation and the backslash\"\
+	-> Out	-> 	test$var1$var2mutipleexpressions$var3
+complainProc
+	-> Out	-> 	this is Complain Proc
+listenTest
+	-> Listen	-> 	listenTime: 20
+branchTest
+	-> Branch	-> 	key: 投诉	nextStepID: complainProc
+	-> Branch	-> 	key: 账单	nextStepID: billProc
+	-> Silence	-> 	nextStepID: silenceProc
+	-> Default	-> 	nextStepID: defaultProc
+silenceProc
+	-> Out	-> 	this is silenceProc
+billProc
+	-> Out	-> 	this is billProc
+defaultProc
+	-> Out	-> 	this is defaultProc
+parse file finished.

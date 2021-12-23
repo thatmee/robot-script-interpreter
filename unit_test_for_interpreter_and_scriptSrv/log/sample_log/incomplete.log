@@ -1,0 +1,59 @@
+generateParseTree...
+error: UnknownToken	An undefined stepID: broadBandProc
+error: UnknownToken	An undefined stepID: serviceProc
+error: UnknownToken	An undefined stepID: artificialProc
+error: UnknownToken	An undefined stepID: broadBandProc
+error: UnknownToken	An undefined stepID: serviceProc
+error: UnknownToken	An undefined stepID: artificialProc
+entry: welcome
+exits: 
+	thanks
+key words: 
+	投诉
+	账单
+	宽带
+	维修
+	人工
+vars: 
+	$name
+	$amount
+step table: 
+welcome
+	-> Out	-> 	$name您好，请问有什么可以帮您?
+	-> Default	-> 	nextStepID: listenAndAct
+listenAndAct
+	-> Listen	-> 	listenTime: 10
+	-> Branch	-> 	key: 投诉	nextStepID: complainProc
+	-> Branch	-> 	key: 账单	nextStepID: billProc
+	-> Branch	-> 	key: 宽带	nextStepID: broadBandProc
+	-> Branch	-> 	key: 维修	nextStepID: serviceProc
+	-> Branch	-> 	key: 人工	nextStepID: artificialProc
+	-> Silence	-> 	nextStepID: silenceProc
+	-> Default	-> 	nextStepID: defaultProc
+noOneProc
+	-> Out	-> 	对不起，系统检测到您可能已离线，随后将自动退出。
+	-> Default	-> 	nextStepID: thanks
+complainProc
+	-> Out	-> 	您的意见是我们改进工作的动力，请问您还有什么补充?
+	-> Listen	-> 	listenTime: 50
+	-> Default	-> 	nextStepID: thanks
+thanks
+	-> Out	-> 	感谢您的来电，再见
+silenceProc
+	-> Out	-> 	听不清，请您大声一点可以吗
+	-> Listen	-> 	listenTime: 10
+	-> Branch	-> 	key: 投诉	nextStepID: complainProc
+	-> Branch	-> 	key: 账单	nextStepID: billProc
+	-> Branch	-> 	key: 宽带	nextStepID: broadBandProc
+	-> Branch	-> 	key: 维修	nextStepID: serviceProc
+	-> Branch	-> 	key: 人工	nextStepID: artificialProc
+	-> Silence	-> 	nextStepID: noOneProc
+	-> Default	-> 	nextStepID: defaultProc
+billProc
+	-> Out	-> 	您的本月账单是$amount元
+	-> Out	-> 	请问还有什么可以帮您？
+	-> Default	-> 	nextStepID: listenAndAct
+defaultProc
+	-> Out	-> 	不好意思，我不太懂您的意思，您可以尝试以下关键词：投诉、账单、宽带、维修、人工，或者
+	-> Default	-> 	nextStepID: listenAndAct
+parse file failed.
